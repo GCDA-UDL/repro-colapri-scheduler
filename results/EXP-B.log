@@ -2,25 +2,25 @@
 #  EXP-B · ColaPri at datacenter scale (4 hosts, 16 VMs x 2 PEs, 320 cloudlets, 20 seeds, CI95)
 #  mapping {RR,MinMin,MaxMin,DemandAware} x scheduler {default, ColaPri}
 ##########################################################################
-[DIAG] VMs created=16 finished=320 makespan=46.2 cloudlets/VM={0=20, 1=20, 2=20, 3=20, 4=20, 5=20, 6=20, 7=20, 8=20, 9=20, 10=20, 11=20, 12=20, 13=20, 14=20, 15=20}
+[DIAG] VMs created=16 finished=320 makespan=45.3 cloudlets/VM={0=20, 1=20, 2=20, 3=20, 4=20, 5=20, 6=20, 7=20, 8=20, 9=20, 10=20, 11=20, 12=20, 13=20, 14=20, 15=20}
 
 mapping/scheduler           makespan    loadCV       resp.p0       resp.p9    waitMAX.p9   starv.p9 overhead.ms        JFIw        JFI1
-RoundRobin/default          46.9±0.7   0.1±0.0      22.7±0.3      23.2±0.7      40.4±0.7    0.0±0.0   11.1±11.0   0.92±0.01   0.85±0.01
-RoundRobin/ColaPri          46.8±0.6   0.1±0.0      21.3±0.4      25.3±0.9      41.4±0.7    0.0±0.0     9.1±3.8   0.94±0.01   0.84±0.01
-MinMin/default              44.4±0.3   0.0±0.0      22.7±0.3      23.1±0.6      39.2±0.4    0.0±0.0     5.3±1.5   0.92±0.01   0.85±0.01
-MinMin/ColaPri              44.3±0.3   0.0±0.0      21.3±0.4      25.1±0.7      39.9±0.3    0.0±0.0     6.6±1.9   0.94±0.01   0.84±0.01
-MaxMin/default              43.9±0.3   0.0±0.0      22.7±0.3      23.2±0.8      39.1±0.4    0.0±0.0     4.1±0.6   0.92±0.01   0.85±0.01
-MaxMin/ColaPri              44.0±0.3   0.0±0.0      21.4±0.4      25.1±0.8      39.7±0.3    0.0±0.0     5.6±1.0   0.94±0.01   0.83±0.01
-DemandAware/default         45.0±0.3   0.0±0.0      22.7±0.3      23.1±0.7      39.0±0.7    0.0±0.0     3.8±0.3   0.92±0.02   0.85±0.01
-DemandAware/ColaPri         44.9±0.3   0.0±0.0      21.3±0.4      25.4±0.7      40.0±0.4    0.0±0.0     7.2±2.0   0.94±0.01   0.84±0.01
+RoundRobin/default          45.9±0.7   0.1±0.0      22.2±0.3      22.7±0.7      39.4±0.7    0.0±0.0    9.8±10.0   0.92±0.01   0.85±0.01
+RoundRobin/ColaPri          45.8±0.6   0.1±0.0      20.9±0.4      24.7±0.8      40.4±0.7    0.0±0.0     8.8±4.7   0.94±0.01   0.84±0.01
+MinMin/default              43.3±0.3   0.0±0.0      22.2±0.3      22.6±0.6      38.2±0.4    0.0±0.0     5.1±1.2   0.92±0.01   0.85±0.01
+MinMin/ColaPri              43.3±0.3   0.0±0.0      20.8±0.4      24.5±0.7      38.9±0.3    0.0±0.0     7.5±2.2   0.94±0.01   0.84±0.01
+MaxMin/default              42.9±0.3   0.0±0.0      22.2±0.3      22.7±0.8      38.1±0.4    0.0±0.0     5.2±0.9   0.92±0.01   0.85±0.01
+MaxMin/ColaPri              43.0±0.3   0.0±0.0      20.9±0.4      24.5±0.8      38.7±0.3    0.0±0.0     7.2±2.2   0.94±0.01   0.83±0.01
+DemandAware/default         43.9±0.3   0.0±0.0      22.2±0.3      22.6±0.7      38.0±0.7    0.0±0.0     5.1±1.1   0.92±0.02   0.85±0.01
+DemandAware/ColaPri         43.8±0.3   0.0±0.0      20.9±0.4      24.9±0.7      39.0±0.4    0.0±0.0     6.3±0.9   0.94±0.01   0.84±0.01
   (JFIw/JFI1 = Jain index of per-VM-pooled class dispatches / weight (or / 1) up to the first class drain)
 
   (makespan/loadCV ≈ mapping · resp.p0/p9 + starv ≈ per-VM scheduler:
    para CADA mapping, ColaPri baja resp.p0 y sube resp.p9 frente a default; makespan igual)
   paired per-seed differences ColaPri - default (mean±CI95):
-    RoundRobin     makespan -0.1±0.3  resp.p0 -1.4±0.4  resp.p9 +2.1±0.9
-    MinMin         makespan -0.0±0.3  resp.p0 -1.5±0.4  resp.p9 +2.0±0.8
+    RoundRobin     makespan -0.1±0.3  resp.p0 -1.3±0.4  resp.p9 +2.1±0.9
+    MinMin         makespan -0.1±0.3  resp.p0 -1.4±0.4  resp.p9 +2.0±0.8
     MaxMin         makespan +0.1±0.2  resp.p0 -1.3±0.3  resp.p9 +1.8±0.9
-    DemandAware    makespan -0.1±0.3  resp.p0 -1.3±0.4  resp.p9 +2.3±0.8
+    DemandAware    makespan -0.1±0.3  resp.p0 -1.3±0.4  resp.p9 +2.2±0.8
 
 #  FIN EXP-B.

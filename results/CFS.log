@@ -1,0 +1,4 @@
+#  CfsProbe · CloudletSchedulerCompletelyFair, 40 staggered tasks on one 2-PE VM
+#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+[CfsProbe] no scheduling interval: terminated, 6/40 tasks finished, makespan 15.9 s (wall 147 ms)
+[CfsProbe] scheduling interval 1.0 s: terminated, 12/40 tasks finished, makespan 30.8 s (wall 16 ms)

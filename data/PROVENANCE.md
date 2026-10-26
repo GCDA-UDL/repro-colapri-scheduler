@@ -1,8 +1,9 @@
 # Trace data — provenance, licensing and verification
 
 EXP-E consumes five trace directories, mounted at `/traces` (layout in the main README).
-`checksums.sha256` in this folder lists the SHA-256 of **every input file actually used** in the
-paper's experiments (1452 files: 1252 bundled + 200 external). Verify with:
+`checksums.sha256` in this folder lists the SHA-256 of **every input file of the five trace directories**
+(1452 files: 1252 bundled + 200 external). EXP-E reads all 100 files of each derived directory and, for
+PlanetLab, the first 200 files by name of `planetlab/20110303` (1052 files bundled). Verify with:
 
 ```bash
 cd /path/to/traces && sha256sum -c /path/to/data/checksums.sha256

@@ -52,13 +52,13 @@ public class RealTraceRigorous {
         System.out.println("##########################################################################");
         System.out.println("#  EXP-E · ColaPri on REAL traces (" + N_SEEDS + " seeds, subsample " + SAMPLE + " VMs, CI95)");
         System.out.println("#  priority by burstiness: bursty=interactive(p0) ... stable=batch(p9)");
-        System.out.println("#  " + Metrics.PACKAGE_VERSION);
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("#  task length = clamp(0.3 * sum(CPU series), 1000, 12000) MI; one arrival every " + SPACING + " s;");
         System.out.println("#  rho = mean length / (MIPS * VM_PES * spacing); 'floor'/'ceiling' = share of tasks clipped to 1000 / 12000 MI");
         System.out.println("##########################################################################");
 
         final Map<String, Supplier<CloudletScheduler>> scheds = new LinkedHashMap<>();
-        scheds.put("FCFS", CloudletSchedulerSpaceShared::new);
+        scheds.put("FCFS", CloudletSchedulerFifo::new);
         scheds.put("StrictPriority", CloudletSchedulerStrictPriority::new);
         scheds.put("EqualShare", CloudletSchedulerWFQ::new);   // equal share per class
         scheds.put("PS-timeshared", org.cloudsimplus.schedulers.cloudlet.CloudletSchedulerTimeShared::new);   // per-task processor sharing
@@ -121,7 +121,7 @@ public class RealTraceRigorous {
     }
 
     private static List<Cloudlet> run(final Supplier<CloudletScheduler> sched, final List<TaskSpec> specs) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var peList = new ArrayList<Pe>(VM_PES);
         for (int i = 0; i < VM_PES; i++) peList.add(new PeSimple(MIPS));
         final Host host = new HostSimple(16384, 100_000, 10_000_000, peList);

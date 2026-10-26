@@ -26,7 +26,7 @@ import java.util.Map;
  * <p>Weights are configurable ({@code setPriorityWeight}); the default per class follows the same
  * repetition table as ColaPri so that both schedulers can be compared with identical weights.</p>
  */
-public class CloudletSchedulerSFQ extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerSFQ extends CloudletSchedulerFifo {
 
     private static final int[] DEFAULT_REP = {60, 50, 40, 30, 15, 10, 5, 3, 2, 1};
 

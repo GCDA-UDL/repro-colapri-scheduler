@@ -3,9 +3,66 @@
 All notable changes to the ColaPri reproduction package. Versions follow the GitHub releases;
 the Zenodo record (once created) archives each release.
 
+## v1.1.2 — 2026-10-24
+
+A third audit (2026-10-22/24) found a defect of the simulation engine that affects every space-shared
+scheduler and a defect of ColaPri's continuous activation. **Every number in `results/` changed.** The
+logs of v1.1.1 reproduce with `-Dcolapri.legacyEngine=true` (`LEGACY=1 ./scripts/run_all.sh`, written to
+`results/rerun_legacy/`): every existing line of EXP-A..E is identical, and in EXP-F only the analytic ramp
+differs, because the extended placement grid selects (50,100) instead of (40,80).
+
+- **Fixed (simulation engine, all space-shared schedulers): dispatch order of CloudSim Plus 8.5.7.**
+  `CloudletSchedulerAbstract.updateProcessing()` moves waiting cloudlets into execution *before* it removes
+  the cloudlets that have just finished. A PE freed by a completion therefore stayed idle until the next
+  processing update (0.11 s on average with the default 0.1 s event granularity), and a cloudlet arriving in
+  between took it ahead of the waiting queue: 5.2% of the tasks of the EXP-A sustained-load workload under
+  FCFS and strict priority, 4.9% under ColaPri. The new base class `CloudletSchedulerFifo` (the FCFS
+  baseline, the "default" scheduler of EXP-B/C, and the superclass of every space-shared scheduler of the
+  package) refills the freed PEs from the waiting list in the same update, through the subclass's own
+  order. `EngineProbe` measures bypass and idle gap (`results/ENGINE.log`, `ENGINE_legacy.log`,
+  `ENGINE_1ms.log`): 0 bypasses and no gap with the fix. Effect: shorter response times in the overloaded
+  scenarios (FCFS high-class mean in the starvation scenario 45.2 → 39.6 s) and the same ranking of the
+  schedulers.
+- **Fixed (ColaPri, continuous activation only): counter re-base.** The per-class counter indexes the
+  lattice 1/w_eff; when the effective weight changed (analytic ramp, fuzzy controller, learned lookup of
+  EXP-F) the counter was reused on the new lattice, so new tasks of a class could overtake earlier ones
+  (weight rising) or jump far ahead of the virtual time (weight falling). The counter is now re-based to the
+  virtual finish of the class's last tag. With constant activation (every experiment except the continuous
+  policies of EXP-F) nothing changes. EXP-F prints an intra-class order check (0 inversions for every
+  policy); `results/EXP-F_noRebase.log` (`-Dcolapri.noRebase=true`) shows 40 561 inverted pairs for the ramp
+  without the re-base.
+- **Proposition 2 audit (EXP-A).** `CloudletSchedulerColaPri.enableBoundAudit()` records, for every task
+  tagged at full activation, its class backlog b_c and the bound D(b_c,c), and counts the dispatches issued
+  before it starts. EXP-A checks the dispatch bound and the waiting-time bound for weights 6:1 … 60:1:
+  0 violations, and the dispatch bound is attained.
+- **EXP-A:** the starvation scenario adds ColaPri 8:1, 10:1 and 12:1, to compare with priority-with-aging at
+  the same high-class response.
+- **EXP-G (new, 2026-10-26): aging-factor sweep.** `AgingSweep` runs priority with aging at factors
+  0.01…3 and ColaPri at weights 1:1…60:1 on the EXP-A starvation workload (200 tasks; its rows for FCFS,
+  strict priority, aging 0.2 and ColaPri 6…60:1 are identical to EXP-A's) and over a three times longer
+  horizon (600 tasks), and compares the two curves at matched high-class response (`results/EXP-G.log`).
+  It replaces the single aging factor chosen for EXP-A with the whole aging curve.
+- **Repository (2026-10-26):** renamed from `GCDA-UDL/colapri-cloud-scheduler` to
+  `GCDA-UDL/repro-colapri-scheduler` (group naming standard; GitHub redirects the old URL). The personal
+  mirror `VitorDaSilvaUdL/colapri-cloud-scheduler` is archived. Zenodo title "… (reproduction package)".
+  The Maven artifact and the log provenance keep the software name `colapri-cloud-scheduler`.
+- **EXP-F:** ramp-placement grid extended to (50,100) and (60,120), so the selection is bracketed; paired
+  lines `always-on − FCFS` and `analytic − always-on w=1:1`.
+- **CfsProbe:** runs without and with a datacenter scheduling interval under a 60 s watchdog and logs the
+  outcome (`results/CFS.log`): both runs terminate with most tasks unfinished (6/40 and 12/40).
+- **Engine settings:** every harness creates its simulation through `Metrics.newSimulation()`; system
+  properties `colapri.legacyEngine`, `colapri.noRebase` and `colapri.minDt`; the provenance line of every log
+  names the settings. The default event granularity stays at 0.1 s because `CloudletSchedulerTimeShared`
+  does not terminate below it.
+- `figures/make_figures.py` parses the logs instead of carrying the numbers as literals, so the figures
+  cannot drift from the tables; `fig_operation` shows the dispatch order of the tag rule (6:3:1, class 9 in
+  the third slot).
+- `scripts/run_all.sh` runs the probes and supports `LEGACY=1`; REPRODUCE.md no longer writes into
+  `results/`; funding acknowledgment added to the README.
+
 ## v1.1.1 — 2026-10-21
 
-Release deposited on Zenodo through the GitHub integration. A second independent audit of v1.1.0 found
+Never published as a release (superseded by v1.1.2). A second independent audit of v1.1.0 found
 one latent defect (non-deterministic Min-Min/Max-Min) and several gaps in what the experiments reported;
 this release fixes the defect, adds the missing controls and re-captures every log.
 

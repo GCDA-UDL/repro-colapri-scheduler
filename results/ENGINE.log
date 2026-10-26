@@ -1,0 +1,5 @@
+#  EngineProbe · queue bypass and dispatch gap on the sustained-load workload (200 tasks, 0.6/s, 90% class 0)
+#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+FCFS             tasks=6000  queue bypass=0 (0.00%)  mean completion-to-dispatch gap=0.000 s  waitMAX.p9=68.0±2.2  resp.p0=39.6±1.1
+StrictPriority   tasks=6000  queue bypass=0 (0.00%)  mean completion-to-dispatch gap=0.000 s  waitMAX.p9=331.1±8.3  resp.p0=22.5±2.0
+ColaPri(6:1)     tasks=6000  queue bypass=0 (0.00%)  mean completion-to-dispatch gap=0.000 s  waitMAX.p9=49.8±9.2  resp.p0=41.0±1.3

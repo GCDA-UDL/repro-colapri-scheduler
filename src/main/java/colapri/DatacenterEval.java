@@ -55,7 +55,7 @@ public class DatacenterEval {
         mappings.put("DemandAware", VmMappers::demandAware);
 
         final Map<String, Supplier<CloudletScheduler>> scheds = new LinkedHashMap<>();
-        scheds.put("default", CloudletSchedulerSpaceShared::new);
+        scheds.put("default", CloudletSchedulerFifo::new);
         scheds.put("ColaPri", () -> new CloudletSchedulerColaPri()
             .setPriorityWeight(0, 6).setPriorityWeight(5, 3).setPriorityWeight(9, 1));
 
@@ -121,7 +121,7 @@ public class DatacenterEval {
     private static Result run(final List<Workload.Spec> specs,
                               final BiFunction<List<Cloudlet>, List<Vm>, Map<Cloudlet, Vm>> mapper,
                               final Supplier<CloudletScheduler> schedFactory) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var hosts = new ArrayList<Host>(HOSTS);
         for (int h = 0; h < HOSTS; h++) {
             final var peList = new ArrayList<Pe>(HOST_PES);

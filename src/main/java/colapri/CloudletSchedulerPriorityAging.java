@@ -21,7 +21,7 @@ import java.util.Map;
  * waitedTime is tracked from the first time each cloudlet is seen in the waiting list
  * (robust; does not rely on the simulator's arrival getter).
  */
-public class CloudletSchedulerPriorityAging extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerPriorityAging extends CloudletSchedulerFifo {
     private final double agingFactor;
     private final Map<Long, Double> firstSeen = new HashMap<>();
 

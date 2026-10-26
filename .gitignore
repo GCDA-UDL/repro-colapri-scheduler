@@ -10,3 +10,6 @@ target/
 # Python (figures)
 __pycache__/
 *.pyc
+
+# re-runs of scripts/run_all.sh (compare with results/ via scripts/compare_logs.py)
+results/rerun*/

@@ -53,7 +53,7 @@ public class RigorousEval {
         System.out.println("##########################################################################");
         System.out.println("#  EXP-A · ColaPri rigorous scheduling eval (W1 synthetic, " + N_SEEDS + " seeds, CI95)");
         System.out.println("#  overhead = wall time of sim.start() (proxy for scheduling decision cost)");
-        System.out.println("#  " + Metrics.PACKAGE_VERSION);
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("##########################################################################");
 
         scenarioMain();
@@ -117,6 +117,8 @@ public class RigorousEval {
         System.out.println("  (rate≈capacidad → p0 fresco llega mientras p9 viejo espera; foco: espera MÁX / inanidos p9)");
         final var schedulers = schedulers();
         // weight sweep: the per-class weight moves ColaPri along the FCFS <-> strict-priority frontier
+        for (final int w0 : new int[]{8, 10, 12})
+            schedulers.put("ColaPri(" + w0 + ":1)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, w0).setPriorityWeight(9, 1));
         schedulers.put("ColaPri(20:1)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 20).setPriorityWeight(9, 1));
         schedulers.put("ColaPri(60:1)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 60).setPriorityWeight(9, 1));
         schedulers.put("SFQ(60:1)", () -> new CloudletSchedulerSFQ().setPriorityWeight(0, 60).setPriorityWeight(9, 1));
@@ -141,6 +143,45 @@ public class RigorousEval {
                 Metrics.pairedCi(waitMaxLow.get(pr[0]), waitMaxLow.get(pr[1])),
                 Metrics.pairedCi(starvLow.get(pr[0]), starvLow.get(pr[1])),
                 Metrics.pairedCi(respHigh.get(pr[0]), respHigh.get(pr[1])));
+        boundAudit();
+    }
+
+    // ---- Proposition 2, checked task by task on the starvation workload: every ColaPri task tagged at full activation
+    //      is dispatched after at most D(b_c,c) other dispatches and waits at most (ceil(D/m)+1)*S_max after tagging ----
+    private static void boundAudit() {
+        System.out.println("\n  Proposition 2 audit (every task, all seeds; m=" + VM_PES + " PEs; S_max = longest task of the seed;");
+        System.out.println("   wait measured from tagging; 'from arrival' adds the time a task spent untagged):");
+        for (final int w0 : new int[]{6, 8, 10, 12, 20, 60}) {
+            long n = 0, vD = 0, vT = 0, vA = 0;
+            double maxRD = 0, maxRT = 0, maxTagDelay = 0;
+            final List<Double> worstWait = new ArrayList<>(), worstB = new ArrayList<>(), worstBound = new ArrayList<>();
+            for (long seed = 0; seed < N_SEEDS; seed++) {
+                final var w = Workload.seeded(seed, 200, 0.6, new int[]{0, 9}, new int[]{9, 1}, BASE_LEN, 0.3, 0.2);
+                double sMax = 0;
+                for (final var s : w) sMax = Math.max(sMax, s.length() / (double) MIPS);
+                final var sched = new CloudletSchedulerColaPri().setPriorityWeight(0, w0).setPriorityWeight(9, 1).enableBoundAudit();
+                run(() -> sched, w, false);
+                double ww = -1, wb = 0, wbound = 0;
+                for (final double[] r : sched.boundAudit()) {
+                    n++;
+                    final double d = r[2], others = r[3], waitTag = r[5] - r[4], waitArr = r[5] - r[6];
+                    final double tb = (Math.ceil(d / VM_PES) + 1) * sMax;
+                    if (others > d) vD++;
+                    if (waitTag > tb + 1e-9) vT++;
+                    if (waitArr > tb + 1e-9) vA++;
+                    maxRD = Math.max(maxRD, d > 0 ? others / d : 0);
+                    maxRT = Math.max(maxRT, waitTag / tb);
+                    maxTagDelay = Math.max(maxTagDelay, r[4] - r[6]);
+                    if (r[0] == 9 && waitArr > ww) { ww = waitArr; wb = r[1]; wbound = tb; }
+                }
+                if (ww >= 0) { worstWait.add(ww); worstB.add(wb); worstBound.add(wbound); }
+            }
+            System.out.printf("    ColaPri(%d:1) tasks=%d  dispatch-bound violations=%d  time-bound violations=%d (from arrival %d)"
+                    + "  max others/D=%.2f  max wait/bound=%.2f  max untagged time=%.2f s%n",
+                w0, n, vD, vT, vA, maxRD, maxRT, maxTagDelay);
+            System.out.printf("      longest low-class wait per seed %s s: it found b_c=%s class-mates waiting; its bound %s s%n",
+                ci(worstWait), ci(worstB), ci(worstBound));
+        }
     }
 
     // ---- ADAPTIVE: the gate (theta=15) is isolated against the ungated scheduler (theta=0) and FCFS at three
@@ -149,7 +190,7 @@ public class RigorousEval {
     private static void scenarioAdaptive() {
         System.out.println("\n\n=== ADAPTIVE (umbral=15 vs umbral=0 vs FCFS) · carga BAJA / MODERADA / ALTA, 30 seeds ===");
         final Map<String, Supplier<CloudletScheduler>> m = new LinkedHashMap<>();
-        m.put("FCFS", CloudletSchedulerSpaceShared::new);
+        m.put("FCFS", CloudletSchedulerFifo::new);
         m.put("ColaPri(theta=15)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 6).setPriorityWeight(9, 1).setAdaptiveThreshold(15));
         m.put("ColaPri(theta=0)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 6).setPriorityWeight(9, 1));
         final var levels = new String[]{"BAJA (24 tareas @0.3/s, rho~0.6, sin backlog)", "MODERADA (60 tareas @0.55/s, rho~1.1, backlog < umbral)", "ALTA (80 tareas @3/s, rafaga, rho~6)"};
@@ -181,7 +222,7 @@ public class RigorousEval {
         System.out.println("\n\n=== IDLE-RETURN · clase 0 sostenida 0.6/s (300 tareas) + clase 9 inactiva hasta t=300 s, luego ráfaga de 20 a 5/s, 30 seeds ===");
         System.out.println("  (maxRun.p9 = racha máxima de arranques consecutivos de p9; resp.p0[300,380) = respuesta de las p0 que llegan durante la ráfaga)");
         final Map<String, Supplier<CloudletScheduler>> m = new LinkedHashMap<>();
-        m.put("FCFS", CloudletSchedulerSpaceShared::new);
+        m.put("FCFS", CloudletSchedulerFifo::new);
         m.put("StrictPriority", CloudletSchedulerStrictPriority::new);
         m.put("SFQ-weighted", () -> new CloudletSchedulerSFQ().setPriorityWeight(0, 6).setPriorityWeight(9, 1));
         m.put("ColaPri(no-sync)", () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 6).setPriorityWeight(9, 1).setResync(false));
@@ -212,7 +253,7 @@ public class RigorousEval {
     // ---- infra ----
     private static Map<String, Supplier<CloudletScheduler>> schedulers() {
         final Map<String, Supplier<CloudletScheduler>> m = new LinkedHashMap<>();
-        m.put("FCFS", CloudletSchedulerSpaceShared::new);
+        m.put("FCFS", CloudletSchedulerFifo::new);
         m.put("SJF", CloudletSchedulerSJF::new);
         m.put("StrictPriority", CloudletSchedulerStrictPriority::new);
         m.put("Priority+Aging", () -> new CloudletSchedulerPriorityAging(0.2));  // tuned so aging actually fires (0.05 degenerates to strict)
@@ -244,7 +285,7 @@ public class RigorousEval {
     }
 
     private static Result run(final Supplier<CloudletScheduler> factory, final List<Workload.Spec> specs, final boolean schedInterval) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var peList = new ArrayList<Pe>(VM_PES);
         for (int i = 0; i < VM_PES; i++) peList.add(new PeSimple(MIPS));
         final Host host = new HostSimple(8192, 100_000, 1_000_000, peList);

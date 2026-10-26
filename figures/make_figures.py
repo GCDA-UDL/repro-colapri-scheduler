@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Generate ColaPri paper figures (PDF, vector) from the final measurements.
-Numbers are the means (+/- CI95) of the EXP-A..EXP-F logs in results/ (corrected harness, 2026-10-20:
-CPU-bound cloudlets, VmPatched, counter resynchronisation). Run: python make_figures.py"""
+"""Generate ColaPri paper figures (PDF, vector) from the captured logs.
+Every plotted number is parsed from the EXP-A..EXP-G logs of the reproduction package (results/), so the figures
+cannot drift from the tables. The logs are looked up in $COLAPRI_RESULTS, ../results (package figures/) or
+../colapri-cloud-scheduler/results (paper/). Run: python make_figures.py"""
 import os
+import re
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -16,6 +18,37 @@ os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"font.size": 11, "figure.autolayout": True})
 GREEN, AMBER, GREY, BLUE = "#2e8b57", "#e0a106", "#888888", "#3b6ea5"
 RED, DARK = "#c0392b", "#1b2733"
+
+# ---- measured values: parsed from the captured logs, never typed in ----
+_CAND = [os.environ.get("COLAPRI_RESULTS", ""), os.path.join(_HERE, "..", "results"),
+         os.path.join(_HERE, "..", "colapri-cloud-scheduler", "results")]
+RESULTS = next((p for p in _CAND if p and os.path.exists(os.path.join(p, "EXP-A.log"))), None)
+_ROW = re.compile(r"^(\S.*?)\s{2,}((?:[-\d.]+±[-\d.]+\s*)+)$", re.M)
+
+
+def _log(k):
+    return open(os.path.join(RESULTS, f"EXP-{k}.log"), encoding="utf-8").read()
+
+
+def _rows(text):
+    """'name   a±b   c±d ...' -> {name: [(a, b), (c, d), ...]}"""
+    return {m.group(1).strip(): [tuple(map(float, v.split("±"))) for v in m.group(2).split()] for m in _ROW.finditer(text)}
+
+
+def _section(text, start):
+    return [b for b in re.split(r"\n===", text) if b.startswith(start)][0]
+
+
+def _starv():
+    return _rows(_section(_log("A"), " STARVATION").split("Proposition 2 audit")[0])
+
+
+def _aging():
+    """EXP-G on the EXP-A starvation workload: {config: [resp.p0, resp.p9, waitMAX.p9, late.p9]} as (mean, ci);
+    the aging-offset column is skipped."""
+    sec = _section(_log("G"), " EXP-A starvation workload").split("matched high-class")[0]
+    return {m.group(1): [tuple(map(float, v.split("±"))) for v in m.group(2).split()]
+            for m in re.finditer(r"^(\S+)\s+\S+\s+((?:[-\d.]+±[-\d.]+\s*){4})$", sec, re.M)}
 
 
 def _box(ax, x, y, w, h, fc, ec="#30363d", lw=1.2, r=0.06):
@@ -69,7 +102,9 @@ def fig_operation():
 
     # dispatch order
     ax.text(8.7, 4.62, "(3) dispatch order\n($\\propto$ weight, no starvation)", ha="center", fontsize=8.6, color=DARK)
-    disp = [0, 0, 5, 0, 0, 5, 0, 0, 5, 9]   # 6:3:1 over ten slots, as in the caption
+    # first ten dispatches of the tag rule (smallest tau first, ties by class), as in fig_vtime: 6:3:1
+    wmap = {0: 6, 5: 3, 9: 1}
+    disp = [c for _, c in sorted((k / wmap[c], c) for c in (0, 5, 9) for k in range(10))[:10]]
     for i, c in enumerate(disp):
         y = 3.9 - i * 0.32
         _toks(ax, 7.7, y, [c], s=0.2, gap=0)
@@ -117,29 +152,36 @@ def fig_architecture():
     plt.close(fig)
 
 
+STARV_ROWS = [("FCFS", "FCFS", GREY), ("SJF", "SJF", GREY), ("Strict", "StrictPriority", AMBER),
+              ("Aging", "Priority+Aging", AMBER), ("EqualShare", "EqualShare", BLUE), ("PS", "PS-timeshared", BLUE),
+              ("DFPO", "DFPO", BLUE), ("SFQ 6:1", "SFQ-weighted", BLUE), ("ColaPri 6:1", "ColaPri", GREEN),
+              ("ColaPri 10:1", "ColaPri(10:1)", GREEN), ("ColaPri 20:1", "ColaPri(20:1)", GREEN),
+              ("ColaPri 60:1", "ColaPri(60:1)", GREEN), ("SFQ 60:1", "SFQ(60:1)", BLUE)]
+
+
 def fig_starvation():
     # EXP-A STARV (30 seeds): waitMAX.p9 mean +/- CI95
-    sched = ["FCFS", "SJF", "Strict", "Aging", "EqualShare", "PS", "DFPO", "SFQ 6:1", "ColaPri 6:1",
-             "ColaPri 20:1", "ColaPri 60:1", "SFQ 60:1"]
-    wait = [79.3, 293.4, 344.1, 120.8, 3.9, 0.0, 4.3, 49.8, 56.9, 223.8, 311.5, 301.2]
-    err = [2.1, 23.3, 8.5, 2.1, 0.4, 0.0, 0.7, 9.8, 10.7, 13.7, 9.2, 10.1]
-    colors = [GREY, GREY, AMBER, AMBER, BLUE, BLUE, BLUE, BLUE, GREEN, GREEN, GREEN, BLUE]
+    s = _starv()
+    sched = [r[0] for r in STARV_ROWS]
+    wait = [s[r[1]][0][0] for r in STARV_ROWS]; err = [s[r[1]][0][1] for r in STARV_ROWS]
+    colors = [r[2] for r in STARV_ROWS]
     fig, ax = plt.subplots(figsize=(7.4, 3.6))
     ax.bar(sched, wait, yerr=err, capsize=3, color=colors)
     ax.set_ylabel("max waiting, low class p9 (s)")
-    ax.set_title("Starvation under sustained load (lower is better)")
+    ax.set_title("Worst-case low-class wait under sustained load (lower is better)")
     ax.set_xticks(range(len(sched))); ax.set_xticklabels(sched, rotation=35, ha="right", fontsize=8.5)
-    ax.annotate("-83% vs Strict", xy=(8, 56.9), xytext=(5.4, 250),
+    cut = round((1 - s["ColaPri"][0][0] / s["StrictPriority"][0][0]) * 100)
+    i = sched.index("ColaPri 6:1")
+    ax.annotate(f"-{cut}% vs Strict", xy=(i, s["ColaPri"][0][0]), xytext=(i - 3.2, 0.75 * max(wait)),
                 arrowprops=dict(arrowstyle="->", color=GREEN), color=GREEN, fontweight="bold")
     fig.savefig(os.path.join(OUT, "fig_starvation.pdf"))
     plt.close(fig)
 
 
 def fig_weights():
-    w = [1, 2, 4, 6, 10, 20]   # EXP-D D1 (30 seeds)
-    p0 = [57.8, 46.2, 39.7, 37.5, 35.8, 34.5]
-    p9 = [58.2, 69.7, 76.5, 78.7, 80.4, 81.7]
-    ratio = [1.0, 1.5, 2.0, 2.1, 2.3, 2.4]
+    d1 = _rows(_section(_log("D"), " D1"))   # EXP-D D1 (30 seeds)
+    w = [1, 2, 4, 6, 10, 20]
+    p0 = [d1[f"{x}:1"][0][0] for x in w]; p9 = [d1[f"{x}:1"][1][0] for x in w]; ratio = [d1[f"{x}:1"][2][0] for x in w]
     fig, ax1 = plt.subplots(figsize=(6, 3.4))
     ax1.plot(w, p0, "o-", color=GREEN, label="resp p0 (high)")
     ax1.plot(w, p9, "s-", color=AMBER, label="resp p9 (low)")
@@ -159,10 +201,11 @@ def fig_weights():
 
 def fig_perclass():
     # EXP-A MAIN (30 seeds): mean response per class
-    sched = ["FCFS", "SJF", "Strict", "PS", "EqualShare", "DFPO", "SFQ", "ColaPri"]
-    p0 = [57.6, 53.5, 33.2, 107.0, 70.2, 61.0, 53.2, 53.6]
-    p5 = [58.5, 53.6, 76.7, 107.3, 51.1, 54.6, 58.6, 58.4]
-    p9 = [62.0, 55.2, 103.0, 107.9, 32.4, 52.4, 69.8, 69.1]
+    m = _rows(_section(_log("A"), " MAIN"))
+    keys = [("FCFS", "FCFS"), ("SJF", "SJF"), ("Strict", "StrictPriority"), ("PS", "PS-timeshared"),
+            ("EqualShare", "EqualShare"), ("DFPO", "DFPO"), ("SFQ", "SFQ-weighted"), ("ColaPri", "ColaPri")]
+    sched = [k[0] for k in keys]
+    p0 = [m[k[1]][0][0] for k in keys]; p5 = [m[k[1]][1][0] for k in keys]; p9 = [m[k[1]][2][0] for k in keys]
     x = np.arange(len(sched)); ww = 0.27
     fig, ax = plt.subplots(figsize=(7.4, 3.4))
     ax.bar(x - ww, p0, ww, label="p0 (high)", color=GREEN)
@@ -178,10 +221,9 @@ def fig_perclass():
 
 def fig_traces():
     ds = ["PlanetLab", "Alibaba", "Bitbrains", "Materna", "Azure"]
-    fcfs = [11.4, 112.7, 84.6, 8.5, 11.5]     # EXP-E (20 seeds): resp.p0
-    sfq = [4.9, 59.8, 51.2, 3.2, 6.1]
-    cola = [4.3, 61.4, 48.9, 2.9, 4.3]
-    strict = [2.7, 32.8, 27.4, 2.1, 2.8]
+    e = {b.split(" ")[0]: _rows(b) for b in re.split(r"\n========== ", _log("E"))[1:]}   # EXP-E (20 seeds)
+    fcfs = [e[d]["FCFS"][0][0] for d in ds]; sfq = [e[d]["SFQ-weighted"][0][0] for d in ds]
+    cola = [e[d]["ColaPri"][0][0] for d in ds]; strict = [e[d]["StrictPriority"][0][0] for d in ds]
     x = np.arange(len(ds)); ww = 0.2
     fig, ax = plt.subplots(figsize=(6.6, 3.4))
     ax.bar(x - 1.5 * ww, fcfs, ww, label="FCFS", color=GREY)
@@ -197,29 +239,30 @@ def fig_traces():
 
 
 def fig_activation():
-    # EXP-F: trade-off resp.p0 (x, lower=faster high class) vs starv.p9 (y, lower=less starvation)
-    # EXP-F TEST seeds (20): resp.p0 vs starv.p9; the fixed-weight controls trace the frontier
-    name = ["always-on 6:1", "FCFS", "fixed(15)", "best-fixed(5)", "analytic(40,80)", "fuzzy(30,60)", "learned",
-            "w=3:1", "w=2:1", "w=1:1"]
-    p0 = [83.7, 86.7, 84.3, 83.7, 92.6, 85.5, 94.0, 92.1, 95.3, 98.6]
-    st = [17.5, 16.5, 17.4, 17.5, 6.9, 14.5, 9.0, 12.6, 7.9, 0.9]
-    col = [GREY, GREY, AMBER, AMBER, GREEN, GREY, BLUE, DARK, DARK, DARK]
-    mk = ["o", "D", "s", "s", "*", "o", "^", "P", "P", "P"]
-    off = {"always-on 6:1": (-10, 11), "FCFS": (6, -12), "fixed(15)": (8, 6), "best-fixed(5)": (8, -16),
-           "analytic(40,80)": (-74, 6), "fuzzy(30,60)": (8, -12), "learned": (6, 5),
-           "w=3:1": (6, 5), "w=2:1": (6, 5), "w=1:1": (-30, 8)}
+    # EXP-F TEST seeds (20): resp.p0 (x) vs late low-class tasks (y, logged as starv.p9); fixed weights trace the frontier
+    f = _log("F")
+    t = _rows(f.split("(TEST seeds")[1].split("paired per-seed")[0])
+    key = lambda prefix: next(k for k in t if k.startswith(prefix))
+    pol = [("always-on 6:1", "always-on", GREY, "o"), ("FCFS", "FCFS", GREY, "D"),
+           ("fixed(15)", "fixed(theta=15)", AMBER, "s"), ("best-fixed", "best-fixed", AMBER, "s"),
+           ("analytic", "analytic", GREEN, "*"), ("fuzzy", "fuzzy", GREY, "o"), ("learned", "learned", BLUE, "^"),
+           ("w=3:1", "always-on w=3:1", DARK, "P"), ("w=2:1", "always-on w=2:1", DARK, "P"), ("w=1:1", "always-on w=1:1", DARK, "P")]
+    name = [p[0] if p[0] not in ("best-fixed", "analytic", "fuzzy") else key(p[1]).replace("theta=", "") for p in pol]
+    p0 = [t[key(p[1])][0][0] for p in pol]; st = [t[key(p[1])][3][0] for p in pol]
+    col = [p[2] for p in pol]; mk = [p[3] for p in pol]
+    off = {0: (-60, 2), 1: (8, 4), 2: (-10, 10), 3: (6, -14), 4: (-82, -2), 5: (-62, -4), 6: (6, 5), 7: (6, 5), 8: (7, 2), 9: (4, 8)}
     fig, ax = plt.subplots(figsize=(6.2, 3.6))
-    ax.set_xlim(81.5, 100.5); ax.set_ylim(-0.5, 20)
-    ax.plot([83.7, 92.1, 95.3, 98.6], [17.5, 12.6, 7.9, 0.9], ":", color=DARK, lw=1.0, zorder=2, label="fixed-weight frontier")
+    ax.set_xlim(min(p0) - 2, max(p0) + 3); ax.set_ylim(-0.8, max(st) + 2.5)
+    fr = [0, 7, 8, 9]
+    ax.plot([p0[i] for i in fr], [st[i] for i in fr], ":", color=DARK, lw=1.0, zorder=2, label="fixed-weight frontier")
     for i in range(len(name)):
         ax.scatter(p0[i], st[i], s=160 if mk[i] == "*" else 90, c=col[i], marker=mk[i],
                    edgecolors="black", linewidths=0.5, zorder=3)
-        ax.annotate(name[i], (p0[i], st[i]), textcoords="offset points",
-                    xytext=off[name[i]], fontsize=8)
+        ax.annotate(name[i], (p0[i], st[i]), textcoords="offset points", xytext=off[i], fontsize=8)
     ax.legend(fontsize=8, loc="upper right")
     ax.set_xlabel("high-class response p0 (s)  —  lower is better")
-    ax.set_ylabel("low-class starvation p9  —  lower is better")
-    ax.set_title("EXP-F: activation policies (bottom-left = better on both)")
+    ax.set_ylabel("late low-class tasks (wait > 60 s)")
+    ax.set_title("EXP-F: activation policies and fixed weights (test seeds)")
     ax.grid(True, alpha=0.3)
     fig.savefig(os.path.join(OUT, "fig_activation.pdf"))
     plt.close(fig)
@@ -324,26 +367,49 @@ def fig_vtime_timeline():
 
 def fig_pareto_starv():
     """Starvation experiment as a trade-off: resp.p0 (x) vs waitMAX.p9 (y); bottom-left is better."""
-    # EXP-A STARV (30 seeds): resp.p0 vs waitMAX.p9; ColaPri weight sweep traces the frontier
-    name = ["FCFS", "SJF", "Strict", "Aging", "EqualShare", "PS", "DFPO", "SFQ 6:1", "ColaPri 6:1",
-            "ColaPri 20:1", "ColaPri 60:1", "SFQ 60:1"]
-    p0 = [45.2, 37.1, 28.2, 40.6, 49.7, 86.5, 49.6, 47.4, 46.5, 35.3, 30.1, 31.1]
-    wm = [79.3, 293.4, 344.1, 120.8, 3.9, 0.0, 4.3, 49.8, 56.9, 223.8, 311.5, 301.2]
-    col = [GREY, GREY, RED, AMBER, BLUE, BLUE, BLUE, BLUE, GREEN, GREEN, GREEN, BLUE]
-    mk = ["o", "o", "s", "s", "^", "^", "^", "D", "*", "*", "*", "D"]
-    offs = {"SFQ 6:1": (-44, -14), "DFPO": (7, -12), "EqualShare": (7, 4), "PS": (-20, 8),
-            "SFQ 60:1": (9, -16), "Strict": (9, -3), "ColaPri 60:1": (9, 9), "ColaPri 20:1": (7, 5),
-            "ColaPri 6:1": (7, 5), "SJF": (7, 5), "FCFS": (7, 5), "Aging": (7, 5)}
-    fig, ax = plt.subplots(figsize=(6.2, 3.8))
-    ax.set_xlim(24, 92)
-    ax.plot([46.5, 35.3, 30.1], [56.9, 223.8, 311.5], "--", color=GREEN, lw=1.0, zorder=2)
+    # EXP-A STARV (30 seeds): resp.p0 vs waitMAX.p9 of the baselines; EXP-G on the same workloads: the ColaPri weight
+    # sweep (1:1 ... 60:1) and the aging-factor sweep (0.01 ... 3) trace one curve each
+    s, g = _starv(), _aging()
+    rows = [("FCFS", "FCFS", GREY, "o"), ("SJF", "SJF", GREY, "o"), ("Strict", "StrictPriority", RED, "s"),
+            ("EqualShare", "EqualShare", BLUE, "^"), ("PS", "PS-timeshared", BLUE, "^"),
+            ("DFPO", "DFPO", BLUE, "^"), ("SFQ 6:1", "SFQ-weighted", BLUE, "D"), ("SFQ 60:1", "SFQ(60:1)", BLUE, "D")]
+    sweep = [k for k in g if k.startswith("ColaPri(")]
+    aging = [k for k in g if k.startswith("Aging(")]
+    name = [r[0] for r in rows]; p0 = [s[r[1]][2][0] for r in rows]; wm = [s[r[1]][0][0] for r in rows]
+    col = [r[2] for r in rows]; mk = [r[3] for r in rows]
+    offs = {"SFQ 6:1": (-50, -12), "DFPO": (8, -12), "EqualShare": (8, 4), "SFQ 60:1": (9, -9),
+            "Strict": (9, -3), "SJF": (7, 5), "FCFS": (-34, -13)}
+    fig, ax = plt.subplots(figsize=(6.2, 4.0))
+    xmax = 50   # processor sharing (p0 = 86.5 s) is marked at the right edge instead of stretching the axis
+    ax.set_xlim(20, xmax); ax.set_ylim(-25, 350)
+    ax_, ay = [g[k][0][0] for k in aging], [g[k][2][0] for k in aging]
+    ax.plot(ax_, ay, "-", color=AMBER, lw=1.0, zorder=2)
+    ax.scatter(ax_, ay, s=40, c=AMBER, marker="s", edgecolors="black", linewidths=0.5, zorder=3,
+               label=f"Priority+Aging, factor {aging[0][6:-1]} ... {aging[-1][6:-1]}")
+    for k, x, y in zip(aging, ax_, ay):
+        if k in ("Aging(0.05)", "Aging(0.1)", "Aging(0.2)"):
+            ax.annotate(f"f={k[6:-1]}", (x, y), textcoords="offset points", xytext=(-38, -16), fontsize=7.5, color="#9a6d00",
+                        arrowprops=dict(arrowstyle="-", color="#9a6d00", lw=0.6, shrinkB=4))
+    cx, cy = [g[k][0][0] for k in sweep], [g[k][2][0] for k in sweep]
+    ax.plot(cx, cy, "--", color=GREEN, lw=1.0, zorder=2)
+    ax.scatter(cx, cy, s=110, c=GREEN, marker="*", edgecolors="black", linewidths=0.5, zorder=3,
+               label=f"ColaPri, weight {sweep[0][8:-1]} ... {sweep[-1][8:-1]}")
+    lab = {"ColaPri(1:1)": (-30, -4), "ColaPri(6:1)": (8, 9), "ColaPri(10:1)": (7, 2), "ColaPri(20:1)": (7, 2),
+           "ColaPri(60:1)": (-6, 9)}
+    for k, x, y in zip(sweep, cx, cy):
+        if k in lab:
+            ax.annotate(k[8:-1], (x, y), textcoords="offset points", xytext=lab[k], fontsize=7.5, color=GREEN)
     for i in range(len(name)):
-        ax.scatter(p0[i], wm[i], s=190 if mk[i] == "*" else 95, c=col[i], marker=mk[i],
-                   edgecolors="black", linewidths=0.5, zorder=3)
-        ax.annotate(name[i], (p0[i], wm[i]), textcoords="offset points", xytext=offs[name[i]], fontsize=8.5)
-    ax.set_xlabel("high-class response p0 (s)  —  lower is better")
-    ax.set_ylabel("worst-case low-class wait p9 (s)  —  lower is better")
-    ax.set_title("Starvation trade-off (sustained load)")
+        if p0[i] > xmax:   # off-axis baseline: an arrow at the right edge with its coordinates
+            ax.annotate(f"{name[i]} ({p0[i]:.1f} s, {wm[i]:.1f} s)", xy=(xmax, wm[i]), xytext=(xmax - 0.3, 75), ha="right",
+                        fontsize=8, arrowprops=dict(arrowstyle="->", color=DARK, lw=0.8))
+            continue
+        ax.scatter(p0[i], wm[i], s=95, c=col[i], marker=mk[i], edgecolors="black", linewidths=0.5, zorder=3)
+        ax.annotate(name[i], (p0[i], wm[i]), textcoords="offset points", xytext=offs.get(name[i], (7, 5)), fontsize=8.5)
+    ax.legend(fontsize=8, loc="upper right")
+    ax.set_xlabel("high-class response p0 (s), lower is better")
+    ax.set_ylabel("worst-case low-class wait p9 (s)")
+    ax.set_title("Starvation trade-off (sustained load; lower left is better)", fontsize=10.5)
     ax.grid(True, alpha=0.3)
     fig.savefig(os.path.join(OUT, "fig_pareto_starv.pdf")); plt.close(fig)
 
@@ -351,9 +417,14 @@ def fig_pareto_starv():
 def fig_adaptive():
     """The gate isolated: FCFS vs gated ColaPri (theta=15) vs ungated ColaPri (theta=0) at three loads (EXP-A ADAPTIVE)."""
     fig, axes = plt.subplots(1, 3, figsize=(9.6, 3.2), sharey=False)
-    panels = [(axes[0], "light load (24 @ 0.3/s, no queue)", [4.1, 4.1], [4.1, 4.1], [4.1, 4.1]),
-              (axes[1], "moderate load (60 @ 0.55/s, backlog < 15)", [11.8, 11.9], [11.8, 11.9], [5.8, 17.9]),
-              (axes[2], "burst (80 @ 3/s)", [72.9, 71.9], [44.9, 98.5], [43.7, 99.9])]
+    g = {}
+    for lv in re.split(r"\n  carga ", _section(_log("A"), " ADAPTIVE"))[1:]:
+        for mm in re.finditer(r"^\s+(\S+)\s+resp\.p0=([\d.]+)±[\d.]+\s+resp\.p9=([\d.]+)±", lv, re.M):
+            g[(lv.split(" ")[0], mm.group(1))] = [float(mm.group(2)), float(mm.group(3))]
+    pick = lambda lv: (g[(lv, "FCFS")], g[(lv, "ColaPri(theta=15)")], g[(lv, "ColaPri(theta=0)")])
+    panels = [(axes[0], "light load (24 @ 0.3/s, no queue)", *pick("BAJA")),
+              (axes[1], "moderate load (60 @ 0.55/s, backlog < 15)", *pick("MODERADA")),
+              (axes[2], "burst (80 @ 3/s)", *pick("ALTA"))]
     for ax, title, f, g, u in panels:
         x = np.arange(2); w = 0.26
         ax.bar(x - w, f, w, label="FCFS", color=GREY)
@@ -369,13 +440,15 @@ def fig_adaptive():
 def fig_datacenter():
     """Per mapping, ColaPri lowers high-class response vs the default scheduler."""
     mp = ["RoundRobin", "MinMin", "MaxMin", "DemandAware"]
-    d0 = [22.7, 22.7, 22.7, 22.7]; c0 = [21.3, 21.3, 21.4, 21.3]   # EXP-B.log resp.p0 default / ColaPri
+    b = _rows(_log("B"))   # EXP-B: resp.p0 is the third metric column (makespan, loadCV, resp.p0, ...)
+    d0 = [b[f"{m}/default"][2][0] for m in mp]; c0 = [b[f"{m}/ColaPri"][2][0] for m in mp]
     x = np.arange(len(mp)); w = 0.38
     fig, ax = plt.subplots(figsize=(6.6, 3.3))
-    ax.bar(x - w / 2, d0, w, label="default  (resp p0)", color=GREY)
+    ax.bar(x - w / 2, d0, w, label="default FCFS (resp p0)", color=GREY)
     ax.bar(x + w / 2, c0, w, label="ColaPri  (resp p0)", color=GREEN)
     ax.set_xticks(x); ax.set_xticklabels(mp); ax.set_ylabel("high-class response p0 (s)")
-    ax.set_ylim(20, 24); ax.set_title("Datacenter: ColaPri speeds p0 under every mapping (axis truncated)", fontsize=10)
+    lo = int(min(c0)) - 1
+    ax.set_ylim(lo, lo + 4); ax.set_title("Datacenter: ColaPri speeds p0 under every mapping (axis truncated)", fontsize=10)
     ax.legend(fontsize=8)
     fig.savefig(os.path.join(OUT, "fig_datacenter.pdf")); plt.close(fig)
 
@@ -383,7 +456,9 @@ def fig_datacenter():
 def fig_scalability():
     """Differentiation grows with scale; makespan unchanged; overhead small."""
     n = [200, 500, 1000]
-    d0 = [14.7, 34.5, 67.2]; c0 = [14.2, 31.3, 58.9]; c9 = [16.0, 41.2, 85.2]; ov = [10.5, 11.8, 37.3]  # EXP-C.log (v1.1.1)
+    c = _rows(_log("C"))   # EXP-C: makespan, resp.p0, resp.p9, overhead.ms, JFIw, JFI1
+    d0 = [c[f"{k}/default"][1][0] for k in n]; c0 = [c[f"{k}/ColaPri"][1][0] for k in n]
+    c9 = [c[f"{k}/ColaPri"][2][0] for k in n]; ov = [c[f"{k}/ColaPri"][3][0] for k in n]
     fig, ax1 = plt.subplots(figsize=(6.4, 3.4))
     ax1.plot(n, c0, "o-", color=GREEN, label="ColaPri p0")
     ax1.plot(n, c9, "s-", color=AMBER, label="ColaPri p9")
@@ -401,33 +476,20 @@ def fig_scalability():
 def fig_sensitivity():
     """Three sensitivity panels: differentiation (p9-p0) vs load, vs PEs, vs threshold."""
     fig, ax = plt.subplots(1, 3, figsize=(9.4, 3.0))
-    # EXP-D D3 / D4 / D2 (30 seeds): p9-p0 differentiation
-    ax[0].plot([0.5, 1, 2, 3, 5], [5.1, 56.0, 57.5, 56.1, 56.9], "o-", color=GREEN)
+    # EXP-D D3 / D4 / D2 (30 seeds): p9-p0 differentiation (third metric column)
+    d = _log("D")
+    d2, d3, d4 = _rows(_section(d, " D2")), _rows(_section(d, " D3")), _rows(_section(d, " D4"))
+    ax[0].plot([0.5, 1, 2, 3, 5], [d3[k][2][0] for k in ("0.5", "1.0", "2.0", "3.0", "5.0")], "o-", color=GREEN)
     ax[0].set_title("vs offered load"); ax[0].set_xlabel("arrival rate (1/s)")
-    ax[1].plot([1, 2, 4, 8], [119.9, 56.1, 24.5, 9.1], "s-", color=AMBER)
+    ax[1].plot([1, 2, 4, 8], [d4[k][2][0] for k in ("1", "2", "4", "8")], "s-", color=AMBER)
     ax[1].set_title("vs VM PEs"); ax[1].set_xlabel("PEs per VM")
-    ax[2].plot([0, 5, 15, 30, 60], [56.1, 56.1, 53.6, 50.3, 46.0], "^-", color=BLUE)
+    ax[2].plot([0, 5, 15, 30, 60], [d2[k][2][0] for k in ("0", "5", "15", "30", "60")], "^-", color=BLUE)
     ax[2].set_title("vs adaptive threshold"); ax[2].set_xlabel(r"threshold $\theta$")
     ax[0].set_ylabel("differentiation  p9$-$p0  (s)")
     for a in ax:
         a.grid(True, alpha=0.3)
     fig.suptitle("Parameter sensitivity of ColaPri's differentiation", fontsize=10)
     fig.savefig(os.path.join(OUT, "fig_sensitivity.pdf")); plt.close(fig)
-
-
-def fig_traces_speedup():
-    """Interactive-class speedup of ColaPri over FCFS per trace (retired from the paper)."""
-    ds = ["PlanetLab", "Alibaba", "Bitbrains", "Materna", "Azure"]
-    fcfs = [11.4, 112.7, 84.6, 8.5, 11.5]; cola = [4.3, 61.4, 48.9, 2.9, 4.3]
-    sp = [round((1 - c / f) * 100) for c, f in zip(cola, fcfs)]
-    fig, ax = plt.subplots(figsize=(6.2, 3.2))
-    bars = ax.bar(ds, sp, color=GREEN)
-    for b, v in zip(bars, sp):
-        ax.text(b.get_x() + b.get_width() / 2, v + 1, f"-{v}%", ha="center", fontsize=9, color=DARK)
-    ax.set_ylabel("interactive-class speedup vs FCFS (%)"); ax.set_ylim(0, 60)
-    ax.set_xticklabels(ds, rotation=15)
-    ax.set_title("ColaPri speeds the interactive class on every trace")
-    fig.savefig(os.path.join(OUT, "fig_traces_speedup.pdf")); plt.close(fig)
 
 
 def fig_algo_flow():

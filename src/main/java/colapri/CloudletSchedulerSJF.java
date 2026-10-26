@@ -9,7 +9,7 @@ import java.util.Comparator;
  * Classic latency-optimal baseline for mean response time, but ignores priority/fairness and
  * starves long jobs. Standard comparator in CloudSim scheduling studies (FCFS/SJF/RR family).
  */
-public class CloudletSchedulerSJF extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerSJF extends CloudletSchedulerFifo {
     @Override
     protected double moveNextCloudletsFromWaitingToExecList(final double currentTime) {
         sortCloudletWaitingList(Comparator.comparingLong(cle -> cle.getCloudlet().getLength()));

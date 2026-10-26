@@ -2,8 +2,9 @@ package colapri;
 
 /**
  * EXP-F: how ColaPri decides its activation degree alpha in [0,1] from the live load
- * (0 = behave as FIFO, 1 = full weighted round-robin). This turns the hand-set threshold into a
- * self-tuning knob and lets us compare design approaches under the SAME mechanism:
+ * (0 = keep arrival order, 1 = full weighted round-robin; in between the effective weight 1 + alpha*(w-1),
+ * which tends to equal share per class as alpha goes to 0). This turns the hand-set threshold into an
+ * automatic setting and lets us compare design approaches under the SAME mechanism:
  *
  *   - {@link #alwaysOn()}      : alpha=1 always (no adaptation).
  *   - {@link #fixed(int)}      : step at a backlog threshold (the original ColaPri behaviour).

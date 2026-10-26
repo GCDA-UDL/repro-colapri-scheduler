@@ -13,7 +13,7 @@ TOK = re.compile(r"[-\d.]+±[-\d.]+")
 def normalise(path):
     out, drop = [], None
     for line in open(path, encoding="utf-8"):
-        line = line.rstrip("\n")
+        line = re.sub(r"\(wall \d+ ms\)", "(wall ms)", line.rstrip("\n"))   # CfsProbe: host-dependent wall time
         if re.search(r"\bstart \d\d:\d\d:\d\d|\bdone \d\d:\d\d", line):
             continue
         toks = line.split()

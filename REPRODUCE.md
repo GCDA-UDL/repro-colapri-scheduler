@@ -2,8 +2,9 @@
 
 Everything runs inside Docker — no local Java or Maven needed. The image provides **Maven 3.9 +
 Eclipse Temurin JDK 21** and pulls **CloudSim Plus 8.5.7** as a Maven dependency; this repository
-provides ColaPri, the seven baseline schedulers, the four task-to-VM mappers, the six experiment
-harnesses and the bundled trace subsets. Experiment logs are written to `results/`.
+provides ColaPri, the eight baseline schedulers (six implemented here, two CloudSim Plus built-ins), the
+four task-to-VM mappers, the seven experiment harnesses, the simulator probes and the bundled trace subsets.
+The reference logs are in `results/`; re-runs are written to `results/rerun/` so they never overwrite them.
 
 > Requirement: **Docker** (Desktop on Windows/macOS, Engine on Linux). ~1 GB free disk.
 > On Windows start Docker Desktop first; the commands below assume Git Bash or PowerShell.
@@ -13,8 +14,8 @@ harnesses and the bundled trace subsets. Experiment logs are written to `results
 ## 0. Clone
 
 ```bash
-git clone https://github.com/GCDA-UDL/colapri-cloud-scheduler.git
-cd colapri-cloud-scheduler
+git clone https://github.com/GCDA-UDL/repro-colapri-scheduler.git
+cd repro-colapri-scheduler
 ```
 
 ## 1. Build the image (first time, ~2 min)
@@ -34,24 +35,30 @@ Each experiment is a `main` class; pass its name as the single argument.
 | `ScalabilityEval`  | EXP-C · 200 / 500 / 1000 tasks | 10 | `results/EXP-C.log` |
 | `SensitivityEval`  | EXP-D · weight ratio, threshold, load, PEs | 30 | `results/EXP-D.log` |
 | `RealTraceRigorous`| EXP-E · five production traces (needs `/traces`) | 20 | `results/EXP-E.log` |
-| `ActivationEval`   | EXP-F · self-tuning activation | 10 train + 20 test | `results/EXP-F.log` |
+| `ActivationEval`   | EXP-F · activation degree vs weight | 10 train + 20 test | `results/EXP-F.log` |
+| `AgingSweep`       | EXP-G · aging-factor sweep vs ColaPri weight sweep | 30 | `results/EXP-G.log` |
+| `EngineProbe`      | dispatch-order defect of CloudSim Plus 8.5.7 (queue bypass, idle gap) | 30 | `results/ENGINE*.log` |
+| `CfsProbe`         | built-in CFS scheduler: termination and finished tasks | — | `results/CFS.log` |
 
 ### Linux / macOS (bash)
 
 ```bash
-docker compose run --rm sim RigorousEval | tee results/EXP-A.log
+mkdir -p results/rerun
+docker compose run --rm sim RigorousEval | tee results/rerun/EXP-A.log
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-docker compose run --rm sim RigorousEval | Tee-Object -FilePath results\EXP-A.log
+New-Item -ItemType Directory -Force results\rerun | Out-Null
+docker compose run --rm sim RigorousEval | Tee-Object -FilePath results\rerun\EXP-A.log
 ```
 
 ### Everything in one go (stock Maven image, no build step)
 
 ```bash
-./scripts/run_all.sh [/absolute/path/to/traces]      # EXP-A..F, one log per experiment in results/rerun/ (reference logs in results/ untouched)
+./scripts/run_all.sh [/absolute/path/to/traces]      # EXP-A..F + probes, one log per experiment in results/rerun/ (reference logs in results/ untouched)
+LEGACY=1 ./scripts/run_all.sh [/path/to/traces]      # engine of v1.1.1 (no dispatch-order fix, no counter re-base) -> results/rerun_legacy/
 ```
 
 Approximate runtime on the reference host (Intel Core i7-14700KF, Windows 11, Docker Desktop):
@@ -75,7 +82,7 @@ origins listed in `data/PROVENANCE.md`, verify it with `sha256sum -c data/checks
 `TRACES` at it:
 
 ```bash
-TRACES=/path/to/traces docker compose run --rm sim RealTraceRigorous | tee results/EXP-E.log
+TRACES=/path/to/traces docker compose run --rm sim RealTraceRigorous | tee results/rerun/EXP-E.log
 ```
 
 ## 4. Check the results against the paper
@@ -86,7 +93,7 @@ response, waiting, makespan, starvation counts, Jain index — are **seed-determ
 reproduce them to the last decimal. Only the wall-clock `overhead.ms` column depends on the host.
 
 ```bash
-python scripts/compare_logs.py results/EXP-A.log /path/to/your/EXP-A.log   # exit 0 = identical
+python scripts/compare_logs.py results/EXP-A.log results/rerun/EXP-A.log   # exit 0 = identical
 ```
 
 `compare_logs.py` drops the `overhead.ms` column (the last column of the blocks that have one)
@@ -101,8 +108,8 @@ against.
 python figures/make_figures.py        # requires matplotlib; writes figures/*.pdf
 ```
 
-The figure scripts carry the measured numbers from `results/` as literals, so they can be checked
-against the logs line by line.
+The figure script parses every plotted number from `results/*.log` (no literals), so the figures always
+match the logs they are generated from.
 
 ## 6. Strict long-term reproduction
 

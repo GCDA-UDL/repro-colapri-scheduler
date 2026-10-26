@@ -19,7 +19,7 @@ import java.util.Map;
  * <b>non-adaptive</b> (always active, no load gate) and offers no per-class weight granularity
  * beyond the three buckets. Default quanta follow Saxena's high:mid:low = 3:2:1.</p>
  */
-public class CloudletSchedulerDFPO extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerDFPO extends CloudletSchedulerFifo {
 
     private final int wHigh, wMid, wLow;
 

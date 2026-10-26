@@ -37,7 +37,7 @@ public class SensitivityEval {
 
         System.out.println("##########################################################################");
         System.out.println("#  EXP-D · ColaPri parameter sensitivity (" + N_SEEDS + " seeds, CI95)");
-        System.out.println("#  " + Metrics.PACKAGE_VERSION);
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("##########################################################################");
 
         d1Weights();
@@ -130,7 +130,7 @@ public class SensitivityEval {
     }
 
     private static List<Cloudlet> run(final Supplier<CloudletScheduler> factory, final List<Workload.Spec> specs, final int vmPes) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var peList = new ArrayList<Pe>(vmPes);
         for (int i = 0; i < vmPes; i++) peList.add(new PeSimple(MIPS));
         final Host host = new HostSimple(8192, 100_000, 1_000_000, peList);

@@ -1,11 +1,11 @@
 {
-  "title": "ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task Scheduling (CloudSim Plus) — replication package",
-  "description": "Replication package for the ColaPri paper: a weighted-fair cloud task scheduler with per-class weights, a provable per-task bounded-waiting (no-starvation) guarantee with counter resynchronisation after idle periods and load-adaptive activation, implemented as a CloudletScheduler for CloudSim Plus 8.5.7. Includes the scheduler, eight baseline schedulers (FCFS, SJF, strict priority, priority+aging, an equal-share-per-class queue, CloudSim Plus's time-shared processor-sharing scheduler, DFPO, and start-time fair queueing with ColaPri's own weights as the classical weighted-fair control), four task-to-VM mapping policies, all six experiment harnesses (EXP-A..F), the captured result logs behind every table in the paper, figure-generation scripts, the bundled PlanetLab, Bitbrains and Materna trace subsets, and SHA-256 checksums plus provenance for the third-party traces that cannot be redistributed (Alibaba, Azure). All simulated metrics are seed-deterministic and reproduce bit-identically. This work has been granted by the Ministerio de Ciencia, Innovación y Universidades (MICIU) AEI/10.13039/501100011033 under contract PID2023-146193OB-I00.",
+  "title": "ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task Scheduling (reproduction package)",
+  "description": "Reproduction package for the ColaPri paper: a weighted-fair cloud task scheduler with per-class weights, a provable per-task bounded-waiting (no-starvation) guarantee with counter resynchronisation after idle periods and load-adaptive activation, implemented as a CloudletScheduler for CloudSim Plus 8.5.7. Includes the scheduler, eight baseline schedulers (FCFS, SJF, strict priority, priority+aging, an equal-share-per-class queue, CloudSim Plus's time-shared processor-sharing scheduler, DFPO, and start-time fair queueing with ColaPri's own weights as the classical weighted-fair control), four task-to-VM mapping policies, all seven experiment harnesses (EXP-A..G, including a sweep of the aging factor of the priority-with-aging baseline), a correction for a dispatch-order defect of CloudSim Plus 8.5.7 that let arriving cloudlets bypass the waiting queue of any space-shared scheduler (CloudletSchedulerFifo, with the EngineProbe that measures it), a per-task audit of the paper's waiting bound, the captured result logs behind every table in the paper, figure-generation scripts, the bundled PlanetLab, Bitbrains and Materna trace subsets, and SHA-256 checksums plus provenance for the third-party traces that cannot be redistributed (Alibaba, Azure). All simulated metrics are seed-deterministic and reproduce bit-identically. This work has been granted by the Ministerio de Ciencia, Innovación y Universidades (MICIU) AEI/10.13039/501100011033 under contract PID2023-146193OB-I00.",
   "license": "Apache-2.0",
   "upload_type": "software",
   "creators": [
     {
-      "name": "da Silva, Vitor Luiz",
+      "name": "da Silva, Vitor L.",
       "orcid": "0000-0002-3296-2752",
       "affiliation": "SEMBAC, Universitat de Lleida"
     },
@@ -33,15 +33,15 @@
     "starvation",
     "CloudSim Plus",
     "simulation",
-    "replication package"
+    "reproduction package"
   ],
   "related_identifiers": [
     {
       "relation": "isSupplementTo",
-      "identifier": "https://github.com/GCDA-UDL/colapri-cloud-scheduler",
+      "identifier": "https://github.com/GCDA-UDL/repro-colapri-scheduler",
       "resource_type": "software"
     }
   ],
   "notes": "Funding: MICIU AEI/10.13039/501100011033, contract PID2023-146193OB-I00. Journal DOI to be added as related_identifier on acceptance.",
-  "version": "1.1.1"
+  "version": "1.1.2"
 }

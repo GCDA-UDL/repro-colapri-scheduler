@@ -36,7 +36,7 @@ public class ScalabilityEval {
 
         System.out.println("##########################################################################");
         System.out.println("#  EXP-C · Scalability (" + HOSTS + " hosts, " + VMS + " VMs, RoundRobin, " + N_SEEDS + " seeds, CI95)");
-        System.out.println("#  " + Metrics.PACKAGE_VERSION);
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("##########################################################################");
         System.out.printf("%n%-22s %12s %12s %12s %12s %11s %11s%n", "config", "makespan", "resp.p0", "resp.p9", "overhead.ms", "JFIw", "JFI1");
 
@@ -45,7 +45,7 @@ public class ScalabilityEval {
             final Map<String, List<Double>> MK = new java.util.LinkedHashMap<>(), P0 = new java.util.LinkedHashMap<>(), P9 = new java.util.LinkedHashMap<>();
             for (final String sched : new String[]{"default", "ColaPri"}) {
                 final Supplier<CloudletScheduler> sc = sched.equals("default")
-                    ? CloudletSchedulerSpaceShared::new
+                    ? CloudletSchedulerFifo::new
                     : () -> new CloudletSchedulerColaPri().setPriorityWeight(0, 6).setPriorityWeight(5, 3).setPriorityWeight(9, 1);
                 final var mk = new ArrayList<Double>(); final var p0 = new ArrayList<Double>();
                 final var p9 = new ArrayList<Double>(); final var ov = new ArrayList<Double>();
@@ -74,7 +74,7 @@ public class ScalabilityEval {
 
     /** returns {makespan, resp.p0, resp.p9, overheadMs} */
     private static double[] run(final List<Workload.Spec> specs, final Supplier<CloudletScheduler> schedFactory) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var hosts = new ArrayList<Host>(HOSTS);
         for (int h = 0; h < HOSTS; h++) {
             final var peList = new ArrayList<Pe>(HOST_PES);

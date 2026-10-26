@@ -1,13 +1,13 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task Scheduling (CloudSim Plus)"
+title: "ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task Scheduling (reproduction package)"
 type: software
-version: 1.1.1
+version: 1.1.2
 license: Apache-2.0
-repository-code: "https://github.com/GCDA-UDL/colapri-cloud-scheduler"
+repository-code: "https://github.com/GCDA-UDL/repro-colapri-scheduler"
 authors:
   - family-names: "da Silva"
-    given-names: "Vitor Luiz"
+    given-names: "Vitor L."
     orcid: "https://orcid.org/0000-0002-3296-2752"
     affiliation: "SEMBAC, Universitat de Lleida"
   - family-names: "Tomàs"
@@ -34,7 +34,7 @@ preferred-citation:
   title: "ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task Scheduling"
   authors:
     - family-names: "da Silva"
-      given-names: "Vitor Luiz"
+      given-names: "Vitor L."
       orcid: "https://orcid.org/0000-0002-3296-2752"
     - family-names: "Tomàs"
       given-names: "Rosana"
@@ -47,4 +47,4 @@ preferred-citation:
       orcid: "https://orcid.org/0000-0003-1352-9555"
   journal: "Simulation Modelling Practice and Theory"
   year: 2026
-  notes: "Under review. DOI to be added on acceptance."
+  notes: "Manuscript in preparation for Simulation Modelling Practice and Theory; DOI to be added on acceptance."

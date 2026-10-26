@@ -10,7 +10,7 @@ import java.util.Comparator;
  * Anti-baseline: optimal for high-priority latency but STARVES low-priority classes
  * under sustained high-priority arrivals.
  */
-public class CloudletSchedulerStrictPriority extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerStrictPriority extends CloudletSchedulerFifo {
     @Override
     protected double moveNextCloudletsFromWaitingToExecList(final double currentTime) {
         sortCloudletWaitingList(Comparator.comparingInt(cle -> cle.getCloudlet().getPriority()));

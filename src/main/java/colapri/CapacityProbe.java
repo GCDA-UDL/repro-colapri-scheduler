@@ -36,7 +36,7 @@ public class CapacityProbe {
     }
 
     private static void run(final String label, final double gap, final boolean full, final boolean sizes) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var peList = new ArrayList<Pe>(2);
         for (int i = 0; i < 2; i++) peList.add(new PeSimple(1000));
         final Host host = new HostSimple(8192, 100_000, 1_000_000, peList);
@@ -44,7 +44,7 @@ public class CapacityProbe {
         final var broker = new DatacenterBrokerSimple(sim);
         broker.setVmDestructionDelay(100_000.0);
         final var vm = new VmPatched(1000, 2);
-        vm.setRam(4096).setBw(10_000).setSize(10_000).setCloudletScheduler(new CloudletSchedulerSpaceShared());
+        vm.setRam(4096).setBw(10_000).setSize(10_000).setCloudletScheduler(new CloudletSchedulerFifo());
         broker.submitVmList(List.of(vm));
         final var cloudlets = new ArrayList<Cloudlet>(8);
         for (int i = 0; i < 8; i++) {

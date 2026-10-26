@@ -47,7 +47,7 @@ public class ActivationEval {
         System.out.println("##########################################################################");
         System.out.println("#  EXP-F · ColaPri AUTOMATIC activation (non-stationary load: calm->storm->drain->calm)");
         System.out.println("#  cost = resp.p0 + 10*starv.p9   (low = fast high-class, no low-class starvation)");
-        System.out.println("#  " + Metrics.PACKAGE_VERSION);
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("##########################################################################");
 
         // ---- learn the lookup table offline on TRAIN seeds ----
@@ -70,7 +70,7 @@ public class ActivationEval {
         System.out.printf("  best fixed theta on TRAIN = %s (train cost %.1f)%n", thetaName(bt), bestThetaCost);
 
         // ---- ramp placement (lo,hi) for the analytic and fuzzy controllers: SELECTED on TRAIN seeds ----
-        final int[][] ramps = {{5, 40}, {10, 40}, {20, 50}, {30, 60}, {40, 80}};
+        final int[][] ramps = {{5, 40}, {10, 40}, {20, 50}, {30, 60}, {40, 80}, {50, 100}, {60, 120}};   // brackets the optimum
         int[] bestA = ramps[0], bestF = ramps[0]; double bestACost = Double.MAX_VALUE, bestFCost = Double.MAX_VALUE;
         System.out.println("\n[ramp placement sweep on TRAIN seeds] (lo,hi) -> analytic cost | fuzzy cost");
         for (final int[] r : ramps) {
@@ -101,6 +101,7 @@ public class ActivationEval {
             new Pol("always-on w=1:1", ActivationPolicy::alwaysOn, 1, 1)
         );
         final Map<String, List<Double>> costBy = new java.util.LinkedHashMap<>(), p0By = new java.util.LinkedHashMap<>(), stBy = new java.util.LinkedHashMap<>();
+        final Map<String, Integer> invBy = new java.util.LinkedHashMap<>();   // intra-class order inversions (FIFO check)
 
         System.out.printf("%n(TEST seeds %d..%d, mean+/-CI95)%n", TRAIN, TRAIN + TEST - 1);
         System.out.printf("%-22s %12s %12s %13s %10s %11s %10s%n",
@@ -109,9 +110,11 @@ public class ActivationEval {
             final var p0 = new ArrayList<Double>(); final var p9 = new ArrayList<Double>();
             final var wmax = new ArrayList<Double>(); final var st = new ArrayList<Double>();
             final var ov = new ArrayList<Double>(); final var co = new ArrayList<Double>();
+            int inv = 0;
             for (long seed = TRAIN; seed < TRAIN + TEST; seed++) {
                 final var r = run(pol.p().get(), phased(seed), pol.w0(), pol.w9());
                 final var f = r.finished();
+                inv += Metrics.intraClassInversions(f, 0) + Metrics.intraClassInversions(f, 9);
                 p0.add(Metrics.meanResponseOfClass(f, 0));
                 p9.add(Metrics.meanResponseOfClass(f, 9));
                 wmax.add(Metrics.maxWaitOfClass(f, 9));
@@ -119,16 +122,23 @@ public class ActivationEval {
                 ov.add(r.wallMs());
                 co.add(cost(f));
             }
-            costBy.put(pol.name(), co); p0By.put(pol.name(), p0); stBy.put(pol.name(), st);
+            costBy.put(pol.name(), co); p0By.put(pol.name(), p0); stBy.put(pol.name(), st); invBy.put(pol.name(), inv);
             System.out.printf("%-22s %12s %12s %13s %10s %11s %10s%n", pol.name(),
                 ci(p0), ci(p9), ci(wmax), ci(st), ci(ov), ci(co));
         }
         final String an = "analytic(" + ra[0] + "," + ra[1] + ")", bf = "best-fixed(theta=" + thetaName(bt) + ")";
         System.out.println("\n  paired per-seed differences (mean±CI95 of the difference):");
-        for (final String other : new String[]{bf, "learned(lookup)", "always-on", "always-on w=3:1", "always-on w=2:1", "FCFS(theta=inf)"})
+        for (final String other : new String[]{bf, "learned(lookup)", "always-on", "always-on w=3:1", "always-on w=2:1", "always-on w=1:1", "FCFS(theta=inf)"})
             System.out.printf("    %-36s cost %s  resp.p0 %s  starv.p9 %s%n", an + " - " + other,
                 Metrics.pairedCi(costBy.get(an), costBy.get(other)), Metrics.pairedCi(p0By.get(an), p0By.get(other)),
                 Metrics.pairedCi(stBy.get(an), stBy.get(other)));
+        System.out.printf("    %-36s cost %s  resp.p0 %s  starv.p9 %s%n", "always-on - FCFS(theta=inf)",
+            Metrics.pairedCi(costBy.get("always-on"), costBy.get("FCFS(theta=inf)")),
+            Metrics.pairedCi(p0By.get("always-on"), p0By.get("FCFS(theta=inf)")),
+            Metrics.pairedCi(stBy.get("always-on"), stBy.get("FCFS(theta=inf)")));
+        System.out.println("\n  intra-class order check (pairs of same-class tasks started out of arrival order, summed over the TEST seeds;");
+        System.out.println("   0 = FIFO within every class):");
+        for (final var e : invBy.entrySet()) System.out.printf("    %-22s %d%n", e.getKey(), e.getValue());
         System.out.println("\n  (the activation degree scales the effective weight: a continuous policy and a smaller fixed weight");
         System.out.println("   move along the same resp.p0 / starv.p9 frontier; the gate only chooses the point from the backlog)");
         System.out.println("\n#  FIN EXP-F.");
@@ -222,7 +232,7 @@ public class ActivationEval {
     }
 
     private static Result run(final ActivationPolicy policy, final List<Workload.Spec> specs, final int w0, final int w9) {
-        final var sim = new CloudSimPlus();
+        final var sim = Metrics.newSimulation();
         final var peList = new ArrayList<Pe>(VM_PES);
         for (int i = 0; i < VM_PES; i++) peList.add(new PeSimple(MIPS));
         final Host host = new HostSimple(8192, 100_000, 1_000_000, peList);

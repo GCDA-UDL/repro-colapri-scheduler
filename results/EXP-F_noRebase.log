@@ -1,0 +1,70 @@
+##########################################################################
+#  EXP-F · ColaPri AUTOMATIC activation (non-stationary load: calm->storm->drain->calm)
+#  cost = resp.p0 + 10*starv.p9   (low = fast high-class, no low-class starvation)
+#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion, no counter re-base (ablation)
+##########################################################################
+
+Learned alpha by backlog bucket [each 12 tasks]: [0.75, 1.0, 0.0, 0.25, 0.25, 0.25]
+
+[fixed-theta sweep] theta -> cost on TRAIN seeds (selection) | cost on TEST seeds (report)
+  theta=0          -> train 256.2 | test 254.5
+  theta=5          -> train 255.4 | test 253.1
+  theta=10         -> train 258.4 | test 250.5
+  theta=20         -> train 251.9 | test 246.0
+  theta=40         -> train 254.8 | test 244.3
+  theta=60         -> train 258.1 | test 244.4
+  theta=80         -> train 256.6 | test 240.2
+  theta=160        -> train 262.2 | test 245.2
+  theta=inf(FCFS)  -> train 262.2 | test 245.2
+  best fixed theta on TRAIN = 20 (train cost 251.9)
+
+[ramp placement sweep on TRAIN seeds] (lo,hi) -> analytic cost | fuzzy cost
+  (5,40) -> analytic 250.3 | fuzzy 250.6
+  (10,40) -> analytic 242.2 | fuzzy 248.7
+  (20,50) -> analytic 216.5 | fuzzy 238.1
+  (30,60) -> analytic 199.5 | fuzzy 222.8
+  (40,80) -> analytic 172.3 | fuzzy 216.2
+  (50,100) -> analytic 147.0 | fuzzy 217.9
+  (60,120) -> analytic 136.4 | fuzzy 219.3
+  selected on TRAIN: analytic(60,120), fuzzy(40,80)
+
+(TEST seeds 10..29, mean+/-CI95)
+policy                      resp.p0      resp.p9    waitMAX.p9   starv.p9 overhead.ms       cost
+always-on                  81.0±2.6     47.3±5.6     208.8±9.2   17.4±2.1     2.6±0.2 254.5±18.5
+FCFS(theta=inf)            83.7±1.3     41.4±2.5     206.4±4.9   16.2±1.5     1.5±0.2 245.2±14.9
+fixed(theta=15)            81.6±2.5     45.8±5.4     207.4±9.9   16.8±2.0     2.0±0.1 249.6±17.5
+best-fixed(theta=20)       82.0±2.4     44.9±5.4    206.3±10.0   16.4±1.9     2.4±0.4 246.0±17.0
+analytic(60,120)           93.3±1.5     18.3±2.3     70.4±14.4    2.9±1.8     1.9±0.1 121.8±17.9
+fuzzy(40,80)               83.8±2.7     40.1±6.0    205.9±10.0   12.8±2.3     1.9±0.1 211.3±20.8
+learned(lookup)            91.7±1.6     21.8±3.1     83.2±11.6    6.7±2.7     2.2±0.3 158.2±25.8
+always-on w=3:1            89.9±1.9     26.0±4.0    116.6±15.2   10.9±2.6     1.9±0.1 198.9±25.3
+always-on w=2:1            93.3±1.6     17.9±2.9     72.0±11.3    5.1±2.6     2.0±0.2 143.8±25.4
+always-on w=1:1            96.7±1.4     10.1±1.7      30.9±6.4    0.4±0.7     2.0±0.1  100.2±7.2
+
+  paired per-seed differences (mean±CI95 of the difference):
+    analytic(60,120) - best-fixed(theta=20) cost -124.3±11.8  resp.p0 +11.2±2.1  starv.p9 -13.6±1.3
+    analytic(60,120) - learned(lookup)   cost -36.4±15.7  resp.p0 +1.6±0.8  starv.p9 -3.8±1.6
+    analytic(60,120) - always-on         cost -132.7±12.9  resp.p0 +12.3±2.3  starv.p9 -14.5±1.4
+    analytic(60,120) - always-on w=3:1   cost -77.1±16.3  resp.p0 +3.4±1.3  starv.p9 -8.1±1.7
+    analytic(60,120) - always-on w=2:1   cost -22.0±14.2  resp.p0 -0.0±0.6  starv.p9 -2.2±1.5
+    analytic(60,120) - always-on w=1:1   cost +21.6±15.3  resp.p0 -3.4±0.5  starv.p9 +2.5±1.6
+    analytic(60,120) - FCFS(theta=inf)   cost -123.4±13.6  resp.p0 +9.6±0.9  starv.p9 -13.3±1.4
+    always-on - FCFS(theta=inf)          cost +9.3±11.1  resp.p0 -2.7±2.1  starv.p9 +1.2±1.3
+
+  intra-class order check (pairs of same-class tasks started out of arrival order, summed over the TEST seeds;
+   0 = FIFO within every class):
+    always-on              0
+    FCFS(theta=inf)        0
+    fixed(theta=15)        0
+    best-fixed(theta=20)   0
+    analytic(60,120)       40561
+    fuzzy(40,80)           3469
+    learned(lookup)        41
+    always-on w=3:1        0
+    always-on w=2:1        0
+    always-on w=1:1        0
+
+  (the activation degree scales the effective weight: a continuous policy and a smaller fixed weight
+   move along the same resp.p0 / starv.p9 frontier; the gate only chooses the point from the backlog)
+
+#  FIN EXP-F.

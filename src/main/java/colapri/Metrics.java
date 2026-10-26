@@ -57,7 +57,37 @@ public final class Metrics {
     }
 
     /** Version string printed at the top of every captured log (provenance). */
-    public static final String PACKAGE_VERSION = "colapri-cloud-scheduler 1.1.1 · CloudSim Plus 8.5.7";
+    public static final String PACKAGE_VERSION = "colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7";
+
+    /** {@code -Dcolapri.legacyEngine=true}: the behaviour of package 1.1.1, i.e. no PE refill in
+     *  {@link CloudletSchedulerFifo} and no counter re-base in {@link CloudletSchedulerColaPri}, to reproduce its logs. */
+    public static final boolean LEGACY_ENGINE = Boolean.getBoolean("colapri.legacyEngine");
+
+    /** {@code -Dcolapri.noRebase=true} (implied by the legacy engine): ColaPri keeps the 1.1.1 class counter when the
+     *  effective weight changes, so the effect of the re-base on the continuous activation policies can be measured. */
+    public static final boolean NO_REBASE = LEGACY_ENGINE || Boolean.getBoolean("colapri.noRebase");
+
+    /** Minimum time between simulation events, in seconds: the CloudSim Plus default (0.1 s) unless the system property
+     *  {@code colapri.minDt} is set. Finer values are used only by {@link EngineProbe}: the built-in time-shared
+     *  scheduler does not terminate below 0.1 s. */
+    private static final String MIN_DT = System.getProperty("colapri.minDt");
+
+    public static double minTimeBetweenEvents() {
+        return MIN_DT != null ? Double.parseDouble(MIN_DT) : 0.1;
+    }
+
+    /** Every harness creates its simulation here, so the event granularity is the same across experiments. */
+    public static org.cloudsimplus.core.CloudSimPlus newSimulation() {
+        return MIN_DT == null ? new org.cloudsimplus.core.CloudSimPlus()
+                              : new org.cloudsimplus.core.CloudSimPlus(minTimeBetweenEvents());
+    }
+
+    /** Provenance line: package version and simulation engine settings. */
+    public static String provenance() {
+        return PACKAGE_VERSION + " · event granularity " + minTimeBetweenEvents() + " s · "
+            + (LEGACY_ENGINE ? "legacy engine of 1.1.1 (no PE refill, no counter re-base)"
+                             : "PE refill on completion" + (NO_REBASE ? ", no counter re-base (ablation)" : ""));
+    }
 
     public static int weightOf(final int priority) {
         final int p = priority < 0 ? 0 : (priority > 9 ? 9 : priority);
@@ -231,6 +261,20 @@ public final class Metrics {
         int run = 0, best = 0;
         for (final var x : s) { run = x.getPriority() == c ? run + 1 : 0; best = Math.max(best, run); }
         return best;
+    }
+
+    /** Pairs of class-c cloudlets started out of arrival order: an earlier arrival that starts strictly after a later
+     *  one of the same class (0 = FIFO within the class). Ties in arrival time are not counted. */
+    public static int intraClassInversions(final List<Cloudlet> finished, final int c) {
+        final var v = new ArrayList<Cloudlet>();
+        for (final var x : finished) if (x.getPriority() == c) v.add(x);
+        v.sort((a, b) -> Double.compare(a.getDcArrivalTime(), b.getDcArrivalTime()));
+        int inv = 0;
+        for (int i = 0; i < v.size(); i++)
+            for (int j = i + 1; j < v.size(); j++)
+                if (v.get(j).getDcArrivalTime() > v.get(i).getDcArrivalTime() + 1e-9
+                        && v.get(j).getStartTime() < v.get(i).getStartTime() - 1e-9) inv++;
+        return inv;
     }
 
     /** Mean response of the class-c cloudlets that arrived in [t0, t1). */

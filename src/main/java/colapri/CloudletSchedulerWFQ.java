@@ -20,7 +20,7 @@ import java.util.Map;
  * Persistent virtual-time tag: the k-th arrival of class c gets tag = k (weight 1). Sorting the
  * waiting list by tag advances all classes equally -> fair, no differentiation, no starvation.
  */
-public class CloudletSchedulerWFQ extends CloudletSchedulerSpaceShared {
+public class CloudletSchedulerWFQ extends CloudletSchedulerFifo {
     private final Map<Long, Double> tag = new HashMap<>();
     private final Map<Integer, Integer> seen = new HashMap<>();
 

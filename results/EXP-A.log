@@ -1,51 +1,69 @@
 ##########################################################################
 #  EXP-A · ColaPri rigorous scheduling eval (W1 synthetic, 30 seeds, CI95)
 #  overhead = wall time of sim.start() (proxy for scheduling decision cost)
-#  colapri-cloud-scheduler 1.1.1 · CloudSim Plus 8.5.7
+#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
 ##########################################################################
 
 === MAIN · 60 tareas, ráfaga 5/s, clases 0/5/9 (mix 3:2:1), 30 seeds ===
 
 scheduler               resp.p0        resp.p5        resp.p9   waitMAX.p9   starv.p9 overhead.ms        JFIw        JFI1
-FCFS                   57.6±1.6       58.5±2.0       62.0±4.0    104.4±2.1    7.3±0.9     2.3±3.1   0.91±0.02   0.82±0.02
-SJF                    53.5±2.0       53.6±2.8       55.2±4.0    104.3±5.4    6.4±0.7     1.3±0.8   0.90±0.02   0.83±0.02
-StrictPriority         33.2±1.4       76.7±2.1      103.0±3.8    111.6±1.2    8.8±0.9     1.0±0.4   0.50±0.04   0.39±0.01
-Priority+Aging         33.2±1.4       76.7±2.1      103.0±3.8    111.6±1.2    8.8±0.9     1.2±0.6   0.50±0.04   0.39±0.01
-EqualShare             70.2±1.7       51.1±2.8       32.4±3.1     50.8±5.8    4.5±1.0     1.5±0.7   0.69±0.02   0.99±0.00
-PS-timeshared         107.0±1.4      107.3±1.4      107.9±1.5      0.0±0.0    0.0±0.0     7.2±1.4   0.91±0.02   0.82±0.02
-DFPO                   61.0±2.1       54.6±3.3       52.4±5.0     90.2±7.2    6.6±0.9     1.1±0.4   0.90±0.01   0.87±0.01
-SFQ-weighted           53.2±2.1       58.6±3.4       69.8±5.3    107.0±4.6    7.2±1.0     1.4±0.6   0.99±0.01   0.75±0.01
-ColaPri                53.6±1.9       58.4±3.2       69.1±5.0    107.6±4.0    7.1±0.9     1.4±0.6   0.99±0.01   0.75±0.01
+FCFS                   55.6±1.7       57.9±2.4       60.6±3.9    101.1±2.2    7.2±0.8     2.5±3.5   0.91±0.02   0.82±0.02
+SJF                    51.3±2.0       51.8±2.5       53.0±3.9    100.6±5.4    6.1±0.7     1.5±1.3   0.90±0.02   0.84±0.02
+StrictPriority         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.2±0.7   0.41±0.02   0.36±0.01
+Priority+Aging         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.3±0.6   0.41±0.02   0.36±0.01
+EqualShare             68.8±1.6       50.1±2.4       29.0±3.0     46.4±5.7    3.9±1.0     1.5±1.0   0.68±0.01   0.99±0.00
+PS-timeshared         107.0±1.4      107.3±1.4      107.9±1.5      0.0±0.0    0.0±0.0     6.8±1.0   0.91±0.02   0.82±0.02
+DFPO                   58.8±2.1       53.9±3.0       50.9±4.8     87.8±7.1    6.3±0.9     1.3±0.5   0.91±0.01   0.87±0.01
+SFQ-weighted           50.4±2.1       58.1±3.0       69.8±4.8    104.6±4.3    7.3±0.9     1.1±0.3   0.99±0.00   0.74±0.01
+ColaPri                50.8±2.0       57.9±2.8       69.5±4.0    105.1±3.2    7.3±0.9     1.2±0.4   0.99±0.00   0.74±0.01
   (resp por clase: FCFS≈plano · Strict≈extremo · ColaPri≈graduado p0<p5<p9)
   (JFIw = Jain index of per-class dispatches / weight up to the first class drain, 1 = shares exactly 6:3:1;
    JFI1 = same with weight 1 for every class, i.e. the equal-share criterion)
   paired per-seed differences (mean±CI95 of the difference):
-    ColaPri - SFQ-weighted       resp.p0 +0.5±0.4  resp.p5 -0.1±0.7  resp.p9 -0.7±1.0
-    ColaPri - FCFS               resp.p0 -4.0±1.8  resp.p9 +7.1±6.2
+    ColaPri - SFQ-weighted       resp.p0 +0.4±0.4  resp.p5 -0.2±0.8  resp.p9 -0.3±1.7
+    ColaPri - FCFS               resp.p0 -4.8±1.9  resp.p9 +8.9±5.7
 
 
 === STARVATION (aislada, llegadas SOSTENIDAS) · 200 tareas 90% p0 + 10% p9, 0.6/s, 30 seeds ===
   (rate≈capacidad → p0 fresco llega mientras p9 viejo espera; foco: espera MÁX / inanidos p9)
 
 scheduler            waitMAX.p9     starv.p9 resp.p0(coste)
-FCFS                   79.3±2.1     12.8±1.4       45.2±1.1
-SJF                  293.4±23.3      4.0±0.7       37.1±1.3
-StrictPriority        344.1±8.5     17.8±1.7       28.2±2.0
-Priority+Aging        120.8±2.1     17.5±1.7       40.6±1.2
-EqualShare              3.9±0.4      0.0±0.0       49.7±1.2
+FCFS                   68.0±2.2     12.1±1.4       39.6±1.1
+SJF                  277.7±25.5      3.5±0.6       32.5±1.2
+StrictPriority        331.1±8.3     18.7±1.8       22.5±2.0
+Priority+Aging        109.5±2.0     18.7±1.8       35.0±1.2
+EqualShare              3.4±0.2      0.0±0.0       43.6±1.2
 PS-timeshared           0.0±0.0      0.0±0.0       86.5±2.3
-DFPO                    4.3±0.7      0.0±0.0       49.6±1.2
-SFQ-weighted           49.8±9.8      5.7±2.3       47.4±1.3
-ColaPri               56.9±10.7      7.2±2.6       46.5±1.4
-ColaPri(20:1)        223.8±13.7     17.2±1.8       35.3±2.1
-ColaPri(60:1)         311.5±9.2     17.8±1.7       30.1±2.0
-SFQ(60:1)            301.2±10.1     17.4±1.8       31.1±2.0
+DFPO                    3.7±0.5      0.0±0.0       43.6±1.2
+SFQ-weighted          44.5±10.1      4.6±2.3       41.5±1.4
+ColaPri                49.8±9.2      6.1±2.3       41.0±1.3
+ColaPri(8:1)          83.7±13.6     10.9±2.6       38.9±1.7
+ColaPri(10:1)        116.8±17.0     14.1±2.4       36.5±1.9
+ColaPri(12:1)        145.2±16.5     16.0±2.1       34.5±1.9
+ColaPri(20:1)        209.7±13.9     17.9±1.9       29.9±2.0
+ColaPri(60:1)         298.6±9.1     18.7±1.8       24.4±2.1
+SFQ(60:1)             288.7±8.6     18.1±1.8       25.5±2.1
   (Strict: waitMAX.p9 explota · ColaPri: acotada, manteniendo resp.p0 baja)
   paired per-seed differences (mean±CI95 of the difference):
-    ColaPri - SFQ-weighted         waitMAX.p9 +7.1±4.5  starv.p9 +1.5±0.7  resp.p0 -0.9±0.5
-    ColaPri(60:1) - SFQ(60:1)      waitMAX.p9 +10.3±4.5  starv.p9 +0.4±0.4  resp.p0 -1.0±0.5
-    ColaPri - FCFS                 waitMAX.p9 -22.4±10.4  starv.p9 -5.6±1.7  resp.p0 +1.4±0.7
-    ColaPri(60:1) - StrictPriority waitMAX.p9 -32.6±6.3  starv.p9 +0.0±0.4  resp.p0 +1.9±0.4
+    ColaPri - SFQ-weighted         waitMAX.p9 +5.3±3.0  starv.p9 +1.4±0.6  resp.p0 -0.5±0.2
+    ColaPri(60:1) - SFQ(60:1)      waitMAX.p9 +9.9±4.7  starv.p9 +0.6±0.2  resp.p0 -1.1±0.3
+    ColaPri - FCFS                 waitMAX.p9 -18.2±8.9  starv.p9 -6.1±1.5  resp.p0 +1.4±0.6
+    ColaPri(60:1) - StrictPriority waitMAX.p9 -32.5±6.6  starv.p9 +0.0±0.1  resp.p0 +1.8±0.2
+
+  Proposition 2 audit (every task, all seeds; m=2 PEs; S_max = longest task of the seed;
+   wait measured from tagging; 'from arrival' adds the time a task spent untagged):
+    ColaPri(6:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.57 s
+      longest low-class wait per seed 49.8±9.2 s: it found b_c=3.0±0.7 class-mates waiting; its bound 82.5±12.1 s
+    ColaPri(8:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.32 s
+      longest low-class wait per seed 83.7±13.6 s: it found b_c=4.2±0.8 class-mates waiting; its bound 129.8±18.2 s
+    ColaPri(10:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.11 s
+      longest low-class wait per seed 116.8±17.0 s: it found b_c=5.0±0.8 class-mates waiting; its bound 180.6±22.5 s
+    ColaPri(12:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.79  max untagged time=4.15 s
+      longest low-class wait per seed 145.2±16.5 s: it found b_c=5.4±0.7 class-mates waiting; its bound 224.9±25.1 s
+    ColaPri(20:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.79  max untagged time=4.42 s
+      longest low-class wait per seed 209.7±13.9 s: it found b_c=4.6±0.4 class-mates waiting; its bound 316.1±22.6 s
+    ColaPri(60:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.76  max untagged time=4.29 s
+      longest low-class wait per seed 298.6±9.1 s: it found b_c=2.1±0.2 class-mates waiting; its bound 504.3±25.9 s
 
 
 === ADAPTIVE (umbral=15 vs umbral=0 vs FCFS) · carga BAJA / MODERADA / ALTA, 30 seeds ===
@@ -57,16 +75,16 @@ SFQ(60:1)            301.2±10.1     17.4±1.8       31.1±2.0
     paired: theta=15 - FCFS resp.p0 +0.0±0.0 resp.p9 +0.0±0.0 | theta=0 - FCFS resp.p0 +0.0±0.0 resp.p9 +0.0±0.0
 
   carga MODERADA (60 tareas @0.55/s, rho~1.1, backlog < umbral):
-    FCFS               resp.p0=11.8±0.7     resp.p9=11.9±0.7     waitMAX.p9=16.6±1.1    
-    ColaPri(theta=15)  resp.p0=11.8±0.7     resp.p9=11.9±0.7     waitMAX.p9=16.6±1.1    
-    ColaPri(theta=0)   resp.p0=5.8±0.2      resp.p9=17.9±1.4     waitMAX.p9=31.6±2.9    
-    paired: theta=15 - FCFS resp.p0 +0.0±0.0 resp.p9 +0.0±0.0 | theta=0 - FCFS resp.p0 -6.0±0.6 resp.p9 +6.0±0.8
+    FCFS               resp.p0=10.4±0.6     resp.p9=10.4±0.7     waitMAX.p9=13.1±1.1    
+    ColaPri(theta=15)  resp.p0=10.4±0.6     resp.p9=10.4±0.7     waitMAX.p9=13.1±1.1    
+    ColaPri(theta=0)   resp.p0=5.7±0.1      resp.p9=15.1±1.3     waitMAX.p9=24.9±2.0    
+    paired: theta=15 - FCFS resp.p0 +0.0±0.0 resp.p9 +0.0±0.0 | theta=0 - FCFS resp.p0 -4.7±0.5 resp.p9 +4.7±0.7
 
   carga ALTA (80 tareas @3/s, rafaga, rho~6):
-    FCFS               resp.p0=72.9±1.7     resp.p9=71.9±1.9     waitMAX.p9=135.9±1.3   
-    ColaPri(theta=15)  resp.p0=44.9±2.2     resp.p9=98.5±1.4     waitMAX.p9=137.4±1.3   
-    ColaPri(theta=0)   resp.p0=43.7±2.2     resp.p9=99.9±1.4     waitMAX.p9=137.6±1.3   
-    paired: theta=15 - FCFS resp.p0 -28.0±3.0 resp.p9 +26.6±2.1 | theta=0 - FCFS resp.p0 -29.1±2.8 resp.p9 +27.9±1.8
+    FCFS               resp.p0=70.6±1.6     resp.p9=69.9±1.8     waitMAX.p9=131.3±1.2   
+    ColaPri(theta=15)  resp.p0=41.3±2.0     resp.p9=98.0±1.2     waitMAX.p9=133.2±1.3   
+    ColaPri(theta=0)   resp.p0=39.5±2.1     resp.p9=99.7±1.0     waitMAX.p9=133.2±1.3   
+    paired: theta=15 - FCFS resp.p0 -29.2±2.4 resp.p9 +28.2±1.8 | theta=0 - FCFS resp.p0 -31.1±2.6 resp.p9 +29.8±1.8
   (BAJA: todos iguales, no hay cola · MODERADA: theta=15 sigue a FCFS, theta=0 diferencia · ALTA: ambos diferencian)
 
 
@@ -74,12 +92,12 @@ SFQ(60:1)            301.2±10.1     17.4±1.8       31.1±2.0
   (maxRun.p9 = racha máxima de arranques consecutivos de p9; resp.p0[300,380) = respuesta de las p0 que llegan durante la ráfaga)
 
 scheduler           maxRun.p9   resp.p0[300,380)        resp.p9     waitMAX.p9
-FCFS                  8.6±1.0          128.9±2.4      102.3±2.6      124.4±2.8
-StrictPriority       18.9±0.2           90.9±1.8      328.2±4.2      359.9±2.3
-SFQ-weighted          1.9±0.3          114.1±2.6      135.5±4.5      273.1±6.7
-ColaPri(no-sync)     14.6±1.7          130.4±1.8       24.5±1.1       40.1±1.6
-ColaPri               1.4±0.2          112.9±2.6      139.8±3.7      275.2±4.4
+FCFS                  9.2±0.4          116.8±2.1       89.5±1.9      105.5±2.1
+StrictPriority       20.0±0.0           77.3±1.7      329.3±2.2      342.6±2.3
+SFQ-weighted          1.0±0.0           97.5±2.0      136.8±2.6      265.6±4.5
+ColaPri(no-sync)     20.0±0.0          117.9±2.0       22.5±0.5       35.8±0.7
+ColaPri               1.0±0.0           96.7±2.2      141.4±1.6      269.3±2.0
   (sin resincronización la clase que vuelve acapara una racha larga y retrasa a p0; con resincronización se intercala 6:1)
-  paired: ColaPri - ColaPri(no-sync) maxRun.p9 -13.3±1.6 resp.p0[300,380) -17.5±2.3 | ColaPri - SFQ-weighted maxRun.p9 -0.5±0.2 resp.p0[300,380) -1.1±1.8
+  paired: ColaPri - ColaPri(no-sync) maxRun.p9 -19.0±0.0 resp.p0[300,380) -21.2±0.5 | ColaPri - SFQ-weighted maxRun.p9 +0.0±0.0 resp.p0[300,380) -0.8±0.5
 
 #  FIN EXP-A.

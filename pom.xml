@@ -6,7 +6,7 @@
 
     <groupId>org.colapri</groupId>
     <artifactId>colapri-cloud-scheduler</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2</version>
     <packaging>jar</packaging>
     <name>ColaPri</name>
     <description>Class-Oriented Load-Adaptive Priority scheduler for cloud task scheduling, evaluated in CloudSim Plus</description>
