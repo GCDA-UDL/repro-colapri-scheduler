@@ -7,7 +7,7 @@
 Reproducible code, experiment harnesses, captured results and trace provenance for the paper:
 
 > **ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task
-> Scheduling** (prepared for submission to *Simulation Modelling Practice and Theory*).
+> Scheduling** (submitted to *Simulation Modelling Practice and Theory*).
 
 **Authors:** Vitor L. da Silva, Rosana Tomàs, Joaquim Oliva, Fernando Guirado — SEMBAC, Universitat de
 Lleida, Spain.
@@ -207,7 +207,7 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
   author  = {da Silva, Vitor L. and Tom{\`a}s, Rosana and Oliva, Joaquim and Guirado, Fernando},
   journal = {Simulation Modelling Practice and Theory},
   year    = {2026},
-  note    = {Manuscript in preparation. Software: https://github.com/GCDA-UDL/repro-colapri-scheduler (Zenodo DOI pending)}
+  note    = {Manuscript submitted. Software: https://github.com/GCDA-UDL/repro-colapri-scheduler, archived on Zenodo}
 }
 ```
 

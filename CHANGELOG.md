@@ -3,7 +3,7 @@
 All notable changes to the ColaPri reproduction package. Versions follow the GitHub releases;
 the Zenodo record (once created) archives each release.
 
-## v1.1.2 — 2026-10-24
+## v1.1.2 — 2026-10-28
 
 A third audit (2026-10-22/24) found a defect of the simulation engine that affects every space-shared
 scheduler and a defect of ColaPri's continuous activation. **Every number in `results/` changed.** The

@@ -1,4 +1,4 @@
-# Zenodo deposit — checklist (estado 2026-10-26)
+# Zenodo deposit — checklist (estado 2026-10-28)
 
 Repo: https://github.com/GCDA-UDL/repro-colapri-scheduler. Se llamaba `colapri-cloud-scheduler` y se
 renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua redirige. El mirror personal
@@ -10,7 +10,7 @@ renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua red
 > el manuscrito — el paper ya cita `colapri_zenodo` en *Data availability* y *Reproducibility*; solo
 > falta el DOI.
 
-## ✅ Ya en el paquete (versión 1.1.2, pendiente de commit/push)
+## ✅ Ya en el paquete (versión 1.1.2)
 - [x] Código: ColaPri (con resincronización) + 8 baselines (FCFS, SJF, strict, aging, EqualShare,
       PS-timeshared, DFPO, SFQ ponderado) + 4 mappers + 7 harnesses (EXP-A..G) + `CfsProbe`, `CapacityProbe`,
       `VmPatched`, `CloudletSchedulerFifo` (corrección del orden de despacho), `EngineProbe`
@@ -28,7 +28,7 @@ renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua red
       se publicó; la que se deposita es **`v1.1.2`** (corrección del motor de simulación, todos los logs nuevos).
 
 ## ⬜ Pasos (en este orden)
-1. **Activar la integración**: zenodo.org → *Account* → *GitHub* (https://zenodo.org/account/settings/github/)
+1. ✅ (2026-10-28) **Activar la integración**: zenodo.org → *Account* → *GitHub* (https://zenodo.org/account/settings/github/)
    → *Sync now* → encender el interruptor de `GCDA-UDL/repro-colapri-scheduler`. Hace falta que el usuario de
    Zenodo tenga vinculada la cuenta GitHub con acceso de admin a la organización `GCDA-UDL` (si el repo no
    aparece, autorizar la app de Zenodo para la organización en GitHub → *Settings* → *Applications*).
