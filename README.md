@@ -2,7 +2,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 ![Reproducible with Docker](https://img.shields.io/badge/reproducible-Docker-2496ED.svg)
-<!-- After the Zenodo deposit add: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX) -->
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23733334.svg)](https://doi.org/10.5281/zenodo.23733334)
 
 Reproducible code, experiment harnesses, captured results and trace provenance for the paper:
 
@@ -207,9 +207,21 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
   author  = {da Silva, Vitor L. and Tom{\`a}s, Rosana and Oliva, Joaquim and Guirado, Fernando},
   journal = {Simulation Modelling Practice and Theory},
   year    = {2026},
-  note    = {Manuscript submitted. Software: https://github.com/GCDA-UDL/repro-colapri-scheduler, archived on Zenodo}
+  note    = {Manuscript submitted}
+}
+
+@software{colapri_repro,
+  author    = {da Silva, Vitor L. and Tom{\`a}s, Rosana and Oliva, Joaquim and Guirado, Fernando},
+  title     = {{ColaPri}: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task
+               Scheduling (reproduction package)},
+  publisher = {Zenodo},
+  version   = {1.1.2},
+  year      = {2026},
+  doi       = {10.5281/zenodo.23733334}
 }
 ```
+
+The DOI above is the Zenodo concept DOI, which always resolves to the latest version (v1.1.2: 10.5281/zenodo.23733335).
 
 See also `CITATION.cff` (machine-readable, picked up by GitHub and Zenodo).
 

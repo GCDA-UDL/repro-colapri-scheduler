@@ -3,7 +3,7 @@
 Repo: https://github.com/GCDA-UDL/repro-colapri-scheduler. Se llamaba `colapri-cloud-scheduler` y se
 renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua redirige. El mirror personal
 `VitorDaSilvaUdL/colapri-cloud-scheduler` quedó archivado. Depósito **vía integración GitHub–Zenodo**
-(decisión del 2026-10-21: no se usa la API con token; el registro lo crea Zenodo a partir de una release).
+(decisión del 2026-10-21: el registro lo crea Zenodo a partir de una release; la financiación se añadió el 2026-10-28 por la API, a petición del autor).
 
 > La guía de autores de SIMPAT (*Research data*, **Option C**) exige depositar los datos/código en un
 > repositorio y **citarlos y enlazarlos en el artículo**. El depósito debe estar hecho **antes de enviar**
@@ -32,7 +32,7 @@ renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua red
    → *Sync now* → encender el interruptor de `GCDA-UDL/repro-colapri-scheduler`. Hace falta que el usuario de
    Zenodo tenga vinculada la cuenta GitHub con acceso de admin a la organización `GCDA-UDL` (si el repo no
    aparece, autorizar la app de Zenodo para la organización en GitHub → *Settings* → *Applications*).
-2. **Publicar la release** `v1.1.2` en GitHub (después de activar; Zenodo solo archiva releases posteriores):
+2. ✅ (2026-10-28) **Publicar la release** `v1.1.2` en GitHub (después de activar; Zenodo solo archiva releases posteriores):
    ```bash
    cd paper5_colapri/colapri-cloud-scheduler
    awk '/^## v1.1.2/{f=1} /^## v1.1.1/{f=0} f' CHANGELOG.md > /tmp/relnotes.md
@@ -41,7 +41,7 @@ renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua red
    ```
    Zenodo recibe el webhook, lee `.zenodo.json` y crea el registro con **concept DOI** (el que se cita;
    nunca el DOI de versión). Comprobar en zenodo.org → *GitHub* que la release aparece con el badge.
-3. Copiar el concept DOI a: `paper/refs.bib` (`colapri_zenodo`: añadir `doi={10.5281/zenodo.XXXXXXX}`,
+3. ✅ (2026-10-28: concept DOI **10.5281/zenodo.23733334**; versión 1.1.2 = 10.5281/zenodo.23733335) Copiar el concept DOI a: `paper/refs.bib` (`colapri_zenodo`: añadir `doi={10.5281/zenodo.XXXXXXX}`,
    version 1.1.2, quitar la nota "pending"), `CITATION.cff` (`doi:`), README (badge en la cabecera + sección
    *Citation*). `.zenodo.json` no cambia. Commit "Add Zenodo DOI" en main (no requiere nueva release).
 4. En Editorial Manager: enlazar el DOI en el *Data statement* (Option C).
@@ -50,5 +50,7 @@ renombró el 2026-10-26 según la norma de nombres del grupo; la URL antigua red
 6. Opcional: pin de la imagen Docker por digest en `Dockerfile` y `scripts/run_all.sh`.
 
 ## Nota
+Financiación (Agencia Estatal de Investigación, PID2023-146193OB-I00, FACTOS) añadida al registro el 2026-10-28. `.zenodo.json` no la lleva, así que en cada versión nueva hay que comprobarla y, si falta, volver a añadirla.
+
 Fuente canónica de números = `results/*.log` (motor corregido, 2026-10-24; versión 1.1.2). Los logs anteriores a v1.1.0
 quedaron invalidados por el defecto C-01 (ver `CHANGELOG.md`).
