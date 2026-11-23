@@ -1,20 +1,20 @@
 ##########################################################################
 #  EXP-A · ColaPri rigorous scheduling eval (W1 synthetic, 30 seeds, CI95)
 #  overhead = wall time of sim.start() (proxy for scheduling decision cost)
-#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
 ##########################################################################
 
 === MAIN · 60 tareas, ráfaga 5/s, clases 0/5/9 (mix 3:2:1), 30 seeds ===
 
 scheduler               resp.p0        resp.p5        resp.p9   waitMAX.p9   starv.p9 overhead.ms        JFIw        JFI1
-FCFS                   55.6±1.7       57.9±2.4       60.6±3.9    101.1±2.2    7.2±0.8     2.5±3.5   0.91±0.02   0.82±0.02
-SJF                    51.3±2.0       51.8±2.5       53.0±3.9    100.6±5.4    6.1±0.7     1.5±1.3   0.90±0.02   0.84±0.02
-StrictPriority         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.2±0.7   0.41±0.02   0.36±0.01
-Priority+Aging         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.3±0.6   0.41±0.02   0.36±0.01
-EqualShare             68.8±1.6       50.1±2.4       29.0±3.0     46.4±5.7    3.9±1.0     1.5±1.0   0.68±0.01   0.99±0.00
-PS-timeshared         107.0±1.4      107.3±1.4      107.9±1.5      0.0±0.0    0.0±0.0     6.8±1.0   0.91±0.02   0.82±0.02
-DFPO                   58.8±2.1       53.9±3.0       50.9±4.8     87.8±7.1    6.3±0.9     1.3±0.5   0.91±0.01   0.87±0.01
-SFQ-weighted           50.4±2.1       58.1±3.0       69.8±4.8    104.6±4.3    7.3±0.9     1.1±0.3   0.99±0.00   0.74±0.01
+FCFS                   55.6±1.7       57.9±2.4       60.6±3.9    101.1±2.2    7.2±0.8     2.6±3.9   0.91±0.02   0.82±0.02
+SJF                    51.3±2.0       51.8±2.5       53.0±3.9    100.6±5.4    6.1±0.7     1.6±1.2   0.90±0.02   0.84±0.02
+StrictPriority         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.4±1.1   0.41±0.02   0.36±0.01
+Priority+Aging         29.6±1.3       76.9±2.0      104.7±2.6    108.2±1.3    9.3±0.9     1.2±0.5   0.41±0.02   0.36±0.01
+EqualShare             68.8±1.6       50.1±2.4       29.0±3.0     46.4±5.7    3.9±1.0     1.3±0.5   0.68±0.01   0.99±0.00
+PS-timeshared         107.0±1.4      107.3±1.4      107.9±1.5      0.0±0.0    0.0±0.0     6.6±1.2   0.91±0.02   0.82±0.02
+DFPO                   55.6±2.3       55.7±3.1       57.3±4.9     92.0±6.4    7.1±1.0     1.9±0.8   0.94±0.01   0.84±0.01
+SFQ-weighted           50.4±2.1       58.1±3.0       69.8±4.8    104.6±4.3    7.3±0.9     1.5±1.1   0.99±0.00   0.74±0.01
 ColaPri                50.8±2.0       57.9±2.8       69.5±4.0    105.1±3.2    7.3±0.9     1.2±0.4   0.99±0.00   0.74±0.01
   (resp por clase: FCFS≈plano · Strict≈extremo · ColaPri≈graduado p0<p5<p9)
   (JFIw = Jain index of per-class dispatches / weight up to the first class drain, 1 = shares exactly 6:3:1;
@@ -34,7 +34,7 @@ StrictPriority        331.1±8.3     18.7±1.8       22.5±2.0
 Priority+Aging        109.5±2.0     18.7±1.8       35.0±1.2
 EqualShare              3.4±0.2      0.0±0.0       43.6±1.2
 PS-timeshared           0.0±0.0      0.0±0.0       86.5±2.3
-DFPO                    3.7±0.5      0.0±0.0       43.6±1.2
+DFPO                   16.6±2.6      0.1±0.1       43.1±1.2
 SFQ-weighted          44.5±10.1      4.6±2.3       41.5±1.4
 ColaPri                49.8±9.2      6.1±2.3       41.0±1.3
 ColaPri(8:1)          83.7±13.6     10.9±2.6       38.9±1.7
@@ -52,17 +52,17 @@ SFQ(60:1)             288.7±8.6     18.1±1.8       25.5±2.1
 
   Proposition 2 audit (every task, all seeds; m=2 PEs; S_max = longest task of the seed;
    wait measured from tagging; 'from arrival' adds the time a task spent untagged):
-    ColaPri(6:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.57 s
+    ColaPri(6:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.98  max wait/bound=0.78  max untagged time=4.57 s
       longest low-class wait per seed 49.8±9.2 s: it found b_c=3.0±0.7 class-mates waiting; its bound 82.5±12.1 s
-    ColaPri(8:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.32 s
+    ColaPri(8:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.97  max wait/bound=0.78  max untagged time=4.32 s
       longest low-class wait per seed 83.7±13.6 s: it found b_c=4.2±0.8 class-mates waiting; its bound 129.8±18.2 s
-    ColaPri(10:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.78  max untagged time=4.11 s
+    ColaPri(10:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.98  max wait/bound=0.78  max untagged time=4.11 s
       longest low-class wait per seed 116.8±17.0 s: it found b_c=5.0±0.8 class-mates waiting; its bound 180.6±22.5 s
-    ColaPri(12:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.79  max untagged time=4.15 s
+    ColaPri(12:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.97  max wait/bound=0.79  max untagged time=4.15 s
       longest low-class wait per seed 145.2±16.5 s: it found b_c=5.4±0.7 class-mates waiting; its bound 224.9±25.1 s
-    ColaPri(20:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.79  max untagged time=4.42 s
+    ColaPri(20:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.98  max wait/bound=0.79  max untagged time=4.42 s
       longest low-class wait per seed 209.7±13.9 s: it found b_c=4.6±0.4 class-mates waiting; its bound 316.1±22.6 s
-    ColaPri(60:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=1.00  max wait/bound=0.76  max untagged time=4.29 s
+    ColaPri(60:1) tasks=5851  dispatch-bound violations=0  time-bound violations=0 (from arrival 0)  max others/D=0.97  max wait/bound=0.76  max untagged time=4.29 s
       longest low-class wait per seed 298.6±9.1 s: it found b_c=2.1±0.2 class-mates waiting; its bound 504.3±25.9 s
 
 

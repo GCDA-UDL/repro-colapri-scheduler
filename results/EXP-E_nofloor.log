@@ -1,0 +1,69 @@
+##########################################################################
+#  EXP-E · ColaPri on REAL traces (20 seeds, subsample 80 VMs, CI95)
+#  priority by burstiness: bursty=interactive(p0) ... stable=batch(p9)
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+#  task length = clamp(0.3 * sum(CPU series), 1, 12000) MI; one arrival every 0.5 s;
+#  rho = mean length / (MIPS * VM_PES * spacing); 'floor'/'ceiling' = share of tasks clipped to 1 / 12000 MI
+##########################################################################
+
+========== PlanetLab (200 VMs disponibles, subsample 80) ==========
+  pool: mean length 975 MI, floor 0.0%, ceiling 0.0%, rho~0.97
+scheduler               resp.p0        resp.p9     waitMAX.p9   starv.p9
+FCFS                    3.2±0.7        2.4±0.7        4.6±1.1    0.0±0.0
+StrictPriority          2.1±0.2        6.1±2.5       13.9±4.4    0.0±0.0
+EqualShare              3.1±0.7        2.7±0.8        5.8±1.3    0.0±0.0
+PS-timeshared           4.5±1.0        1.4±0.3        0.0±0.0    0.0±0.0
+SFQ-weighted            2.8±0.6        2.8±0.9        6.7±2.2    0.0±0.0
+ColaPri                 2.3±0.4        5.2±2.1       11.4±3.5    0.0±0.0
+  (ColaPri debe bajar resp.p0 (interactiva) vs FCFS y acotar waitMAX.p9 vs StrictPriority)
+  paired: ColaPri - SFQ-weighted resp.p0 -0.5±0.3 resp.p9 +2.5±1.5 waitMAX.p9 +4.7±2.5 | ColaPri - FCFS resp.p0 -0.9±0.4 | ColaPri - StrictPriority waitMAX.p9 -2.4±1.3 starv.p9 +0.0±0.0
+
+========== Alibaba (100 VMs disponibles, subsample 80) ==========
+  pool: mean length 6305 MI, floor 0.0%, ceiling 0.0%, rho~6.31
+scheduler               resp.p0        resp.p9     waitMAX.p9   starv.p9
+FCFS                  109.6±5.6      111.7±3.8      205.2±2.4   21.0±0.9
+StrictPriority         28.4±1.0      185.0±1.8      210.4±0.6   27.2±0.3
+EqualShare            109.4±2.6      114.7±2.5      210.5±0.9   21.2±0.3
+PS-timeshared         215.5±1.5      226.6±1.2        0.0±0.0    0.0±0.0
+SFQ-weighted           55.8±1.5      167.4±2.0      210.4±0.6   25.2±0.3
+ColaPri                57.4±1.5      165.0±2.0      210.4±0.7   25.2±0.3
+  (ColaPri debe bajar resp.p0 (interactiva) vs FCFS y acotar waitMAX.p9 vs StrictPriority)
+  paired: ColaPri - SFQ-weighted resp.p0 +1.6±0.4 resp.p9 -2.5±0.3 waitMAX.p9 +0.0±0.3 | ColaPri - FCFS resp.p0 -52.2±5.7 | ColaPri - StrictPriority waitMAX.p9 -0.0±0.2 starv.p9 -2.0±0.0
+
+========== Bitbrains (100 VMs disponibles, subsample 80) ==========
+  pool: mean length 4862 MI, floor 0.0%, ceiling 9.0%, rho~4.86
+scheduler               resp.p0        resp.p9     waitMAX.p9   starv.p9
+FCFS                   80.3±5.4       81.1±6.0      149.3±4.4   18.2±1.4
+StrictPriority         23.9±2.1      142.2±3.6      155.6±3.6   27.1±0.3
+EqualShare             78.1±4.2       82.8±3.5      153.2±4.2   18.5±0.8
+PS-timeshared         103.4±3.8       71.1±5.0        0.0±0.0    0.0±0.0
+SFQ-weighted           47.7±3.7      118.4±6.8      155.8±3.9   22.9±1.4
+ColaPri                42.5±3.6      126.0±3.4      155.6±3.8   24.6±0.3
+  (ColaPri debe bajar resp.p0 (interactiva) vs FCFS y acotar waitMAX.p9 vs StrictPriority)
+  paired: ColaPri - SFQ-weighted resp.p0 -5.2±3.1 resp.p9 +7.7±4.6 waitMAX.p9 -0.2±0.5 | ColaPri - FCFS resp.p0 -37.8±5.1 | ColaPri - StrictPriority waitMAX.p9 +0.1±0.3 starv.p9 -2.5±0.3
+
+========== Materna (100 VMs disponibles, subsample 80) ==========
+  pool: mean length 855 MI, floor 0.0%, ceiling 0.0%, rho~0.85
+scheduler               resp.p0        resp.p9     waitMAX.p9   starv.p9
+FCFS                    1.8±0.2        1.3±0.2        2.1±0.4    0.0±0.0
+StrictPriority          1.5±0.1        1.9±0.4        5.6±1.2    0.0±0.0
+EqualShare              1.7±0.2        1.5±0.3        3.1±0.9    0.0±0.0
+PS-timeshared           2.7±0.3        1.5±0.2        0.0±0.0    0.0±0.0
+SFQ-weighted            1.6±0.1        1.7±0.4        4.6±1.1    0.0±0.0
+ColaPri                 1.6±0.1        1.9±0.4        5.2±1.2    0.0±0.0
+  (ColaPri debe bajar resp.p0 (interactiva) vs FCFS y acotar waitMAX.p9 vs StrictPriority)
+  paired: ColaPri - SFQ-weighted resp.p0 -0.1±0.0 resp.p9 +0.1±0.1 waitMAX.p9 +0.5±0.4 | ColaPri - FCFS resp.p0 -0.2±0.1 | ColaPri - StrictPriority waitMAX.p9 -0.4±0.5 starv.p9 +0.0±0.0
+
+========== Azure (100 VMs disponibles, subsample 80) ==========
+  pool: mean length 1143 MI, floor 0.0%, ceiling 0.0%, rho~1.14
+scheduler               resp.p0        resp.p9     waitMAX.p9   starv.p9
+FCFS                    5.9±0.7        5.2±0.9        8.4±1.0    0.0±0.0
+StrictPriority          2.4±0.1       14.6±2.3       27.2±3.4    0.0±0.0
+EqualShare              5.7±0.9        5.6±1.0       10.9±1.5    0.0±0.0
+PS-timeshared          10.4±1.3        4.2±0.6        0.0±0.0    0.0±0.0
+SFQ-weighted            4.4±0.6       10.7±1.7       20.0±2.6    0.0±0.0
+ColaPri                 3.0±0.3       12.7±1.8       23.0±2.3    0.0±0.0
+  (ColaPri debe bajar resp.p0 (interactiva) vs FCFS y acotar waitMAX.p9 vs StrictPriority)
+  paired: ColaPri - SFQ-weighted resp.p0 -1.4±0.5 resp.p9 +2.1±0.7 waitMAX.p9 +3.0±1.4 | ColaPri - FCFS resp.p0 -2.8±0.6 | ColaPri - StrictPriority waitMAX.p9 -4.2±1.7 starv.p9 +0.0±0.0
+
+#  FIN EXP-E.

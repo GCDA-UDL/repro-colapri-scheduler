@@ -18,8 +18,10 @@ import java.util.Set;
  *   - roundRobin   : cloudlet i -> VM (i mod m). Trivial spread baseline.
  *   - minMin       : classic Min-Min (assign the task with the smallest earliest-completion first).
  *   - maxMin       : classic Max-Min (assign the task with the largest earliest-completion first).
- *   - demandAware  : 2026 baseline (Sultan, SISTEMASI) — bind each task to the VM giving it the
- *                    minimum completion time given current projected load (a.k.a. MCT / least-loaded).
+ *   - mct          : Minimum Completion Time (Braun et al. 2001) — bind each task, in submission order, to the VM
+ *                    on which it would finish first given the VMs' projected load. (Labelled "DemandAware" up to
+ *                    package version 1.1.2; the Demand-Aware VM selection of Sultan (2026) is a different rule, a
+ *                    weighted CPU/memory/bandwidth demand-to-capacity score, and is not implemented here.)
  *
  * Completion-time model: rate(v) = mips(v) * pes(v); a VM's ready time advances by length/rate.
  * Heuristic-grade (ignores intra-VM queueing detail), which is standard for these mappers.
@@ -34,8 +36,8 @@ public final class VmMappers {
         return a;
     }
 
-    /** Greedy least-projected-completion (Minimum Completion Time). Faithful to Demand-Aware VM Selection 2026. */
-    public static Map<Cloudlet, Vm> demandAware(final List<Cloudlet> cloudlets, final List<Vm> vms) {
+    /** Minimum Completion Time (Braun et al. 2001): greedy least projected completion, tasks in submission order. */
+    public static Map<Cloudlet, Vm> mct(final List<Cloudlet> cloudlets, final List<Vm> vms) {
         final Map<Cloudlet, Vm> a = new IdentityHashMap<>();
         final double[] ready = new double[vms.size()];
         for (final Cloudlet c : cloudlets) {

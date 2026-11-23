@@ -3,7 +3,7 @@
 Everything runs inside Docker — no local Java or Maven needed. The image provides **Maven 3.9 +
 Eclipse Temurin JDK 21** and pulls **CloudSim Plus 8.5.7** as a Maven dependency; this repository
 provides ColaPri, the eight baseline schedulers (six implemented here, two CloudSim Plus built-ins), the
-four task-to-VM mappers, the seven experiment harnesses, the simulator probes and the bundled trace subsets.
+four task-to-VM mappers, the eight experiment harnesses, the simulator probes and the bundled trace subsets.
 The reference logs are in `results/`; re-runs are written to `results/rerun/` so they never overwrite them.
 
 > Requirement: **Docker** (Desktop on Windows/macOS, Engine on Linux). ~1 GB free disk.
@@ -34,11 +34,13 @@ Each experiment is a `main` class; pass its name as the single argument.
 | `DatacenterEval`   | EXP-B · 4 hosts / 16 VMs × 4 mapping policies | 20 | `results/EXP-B.log` |
 | `ScalabilityEval`  | EXP-C · 200 / 500 / 1000 tasks | 10 | `results/EXP-C.log` |
 | `SensitivityEval`  | EXP-D · weight ratio, threshold, load, PEs | 30 | `results/EXP-D.log` |
-| `RealTraceRigorous`| EXP-E · five production traces (needs `/traces`) | 20 | `results/EXP-E.log` |
+| `RealTraceRigorous`| EXP-E · five trace-derived task mixes (needs `/traces`; `-Dcolapri.traceFloor=1` removes the length floor) | 20 | `results/EXP-E.log`, `results/EXP-E_nofloor.log` |
 | `ActivationEval`   | EXP-F · activation degree vs weight | 10 train + 20 test | `results/EXP-F.log` |
 | `AgingSweep`       | EXP-G · aging-factor sweep vs ColaPri weight sweep | 30 | `results/EXP-G.log` |
+| `StochasticEval`   | EXP-H · Poisson arrivals: M/M/2 check and stable heavy traffic (`-Dcolapri.minDt=0.001` for 1 ms) | 30 | `results/EXP-H.log`, `results/EXP-H_1ms.log` |
 | `EngineProbe`      | dispatch-order defect of CloudSim Plus 8.5.7 (queue bypass, idle gap) | 30 | `results/ENGINE*.log` |
 | `CfsProbe`         | built-in CFS scheduler: termination and finished tasks | — | `results/CFS.log` |
+| `CapacityProbe`    | throttling of cloudlets that claim their VM's full RAM/BW (v1.0.x harness defect) | — | `results/CAPACITY.log` |
 
 ### Linux / macOS (bash)
 
@@ -57,14 +59,14 @@ docker compose run --rm sim RigorousEval | Tee-Object -FilePath results\rerun\EX
 ### Everything in one go (stock Maven image, no build step)
 
 ```bash
-./scripts/run_all.sh [/absolute/path/to/traces]      # EXP-A..F + probes, one log per experiment in results/rerun/ (reference logs in results/ untouched)
+./scripts/run_all.sh [/absolute/path/to/traces]      # EXP-A..H + probes, one log per experiment in results/rerun/ (reference logs in results/ untouched)
 LEGACY=1 ./scripts/run_all.sh [/path/to/traces]      # engine of v1.1.1 (no dispatch-order fix, no counter re-base) -> results/rerun_legacy/
 ```
 
 Approximate runtime on the reference host (Intel Core i7-14700KF, Windows 11, Docker Desktop):
 EXP-A and EXP-E under 30 s each; the whole matrix a few minutes.
 
-## 3. Production traces (EXP-E)
+## 3. Trace-derived task mixes (EXP-E)
 
 `RealTraceRigorous` reads five directories under `/traces` (layout and file formats in the README):
 

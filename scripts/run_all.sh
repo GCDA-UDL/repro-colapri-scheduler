@@ -41,5 +41,11 @@ docker run --rm "${VOLS[@]}" -e OUT="$OUT" -e PROPS="$PROPS" -w /workspace "$IMG
     run EngineProbe    ENGINE_1ms    "-Dcolapri.minDt=0.001"
     run ActivationEval EXP-F_noRebase "-Dcolapri.noRebase=true"
     run CfsProbe       CFS
+    # new in 1.1.3: stochastic (Poisson) arrivals, the trace reduction without its 1000 MI floor and the RAM/BW
+    # throttling probe of the 1.0.x harness
+    run StochasticEval EXP-H
+    run StochasticEval EXP-H_1ms  "-Dcolapri.minDt=0.001"   # engine validation at 1 ms granularity
+    if [ -d /traces ]; then run RealTraceRigorous EXP-E_nofloor "-Dcolapri.traceFloor=1"; else echo "EXP-E_nofloor skipped (no /traces mount)"; fi
+    run CapacityProbe  CAPACITY
   fi
   echo ALL_DONE'

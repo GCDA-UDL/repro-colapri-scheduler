@@ -117,6 +117,10 @@ public class CloudletSchedulerColaPri extends CloudletSchedulerFifo {
 
     @Override
     protected double moveNextCloudletsFromWaitingToExecList(final double currentTime) {
+        // tasks that started at once on arrival (a PE was free) since the last call were dispatched before any task
+        // tagged below: count them first, so they are not charged to the tasks tagged now (fix of 1.1.3; 1.1.2 counted
+        // them after the tagging, which overstated the count of other dispatches by the direct starts of the update)
+        if (audit) countDispatches(currentTime);
         orderWaitingByColaPri(currentTime);
         final double next = super.moveNextCloudletsFromWaitingToExecList(currentTime);
         // advance the frontier to the largest tag now in service (SFQ-style virtual time)
@@ -124,17 +128,20 @@ public class CloudletSchedulerColaPri extends CloudletSchedulerFifo {
             final Double t = tag.get(cle.getId());
             if (t != null && t > virtualTime) virtualTime = t;
         }
-        if (audit) {   // count dispatches in the order they were issued: untagged first, then by tag
-            final var fresh = new java.util.ArrayList<CloudletExecution>();
-            for (final CloudletExecution cle : getCloudletExecList()) if (started.add(cle.getId())) fresh.add(cle);
-            fresh.sort(Comparator.comparingDouble(cle -> tag.getOrDefault(cle.getId(), -1.0)));
-            for (final CloudletExecution cle : fresh) {
-                final double[] p = pending.remove(cle.getId());
-                if (p != null) auditRows.add(new double[]{p[0], p[1], p[2], dispatches - p[3], p[4], currentTime, p[5]});
-                dispatches++;
-            }
-        }
+        if (audit) countDispatches(currentTime);
         return next;
+    }
+
+    /** Audit: count the executions not seen before, in the order they were issued (untagged first, then by tag). */
+    private void countDispatches(final double currentTime) {
+        final var fresh = new java.util.ArrayList<CloudletExecution>();
+        for (final CloudletExecution cle : getCloudletExecList()) if (started.add(cle.getId())) fresh.add(cle);
+        fresh.sort(Comparator.comparingDouble(cle -> tag.getOrDefault(cle.getId(), -1.0)));
+        for (final CloudletExecution cle : fresh) {
+            final double[] p = pending.remove(cle.getId());
+            if (p != null) auditRows.add(new double[]{p[0], p[1], p[2], dispatches - p[3], p[4], currentTime, p[5]});
+            dispatches++;
+        }
     }
 
     private void orderWaitingByColaPri(final double currentTime) {

@@ -57,7 +57,7 @@ public final class Metrics {
     }
 
     /** Version string printed at the top of every captured log (provenance). */
-    public static final String PACKAGE_VERSION = "colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7";
+    public static final String PACKAGE_VERSION = "colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7";
 
     /** {@code -Dcolapri.legacyEngine=true}: the behaviour of package 1.1.1, i.e. no PE refill in
      *  {@link CloudletSchedulerFifo} and no counter re-base in {@link CloudletSchedulerColaPri}, to reproduce its logs. */
@@ -68,7 +68,7 @@ public final class Metrics {
     public static final boolean NO_REBASE = LEGACY_ENGINE || Boolean.getBoolean("colapri.noRebase");
 
     /** Minimum time between simulation events, in seconds: the CloudSim Plus default (0.1 s) unless the system property
-     *  {@code colapri.minDt} is set. Finer values are used only by {@link EngineProbe}: the built-in time-shared
+     *  {@code colapri.minDt} is set. Finer values are used only by {@link EngineProbe} and EXP-H_1ms: the built-in time-shared
      *  scheduler does not terminate below 0.1 s. */
     private static final String MIN_DT = System.getProperty("colapri.minDt");
 
@@ -144,6 +144,28 @@ public final class Metrics {
     public static double p95ResponseOfClass(final List<Cloudlet> finished, final int c) { return p95(respOfClass(finished, c)); }
     public static double meanWaitOfClass(final List<Cloudlet> finished, final int c) { return mean(waitOfClass(finished, c)); }
     public static double maxWaitOfClass(final List<Cloudlet> finished, final int c) { return max(waitOfClass(finished, c)); }
+
+    /** q-quantile (0..1, nearest rank) of the waiting times of class c. Since 1.1.3 (EXP-H). */
+    public static double quantileWaitOfClass(final List<Cloudlet> finished, final int c, final double q) {
+        final var s = waitOfClass(finished, c);
+        if (s.isEmpty()) return 0;
+        s.sort(Double::compareTo);
+        return s.get((int) Math.floor(q * (s.size() - 1)));
+    }
+
+    /** Mean waiting time of all finished tasks, whatever their class. Since 1.1.3 (EXP-H validation). */
+    public static double meanWait(final List<Cloudlet> finished) {
+        final var v = new ArrayList<Double>();
+        for (final var x : finished) v.add(waiting(x));
+        return mean(v);
+    }
+
+    /** The finished tasks that arrived at or after t0 (warm-up removal). Since 1.1.3 (EXP-H). */
+    public static List<Cloudlet> arrivedFrom(final List<Cloudlet> finished, final double t0) {
+        final var v = new ArrayList<Cloudlet>();
+        for (final var x : finished) if (x.getDcArrivalTime() >= t0) v.add(x);
+        return v;
+    }
 
     public static int starvationCount(final List<Cloudlet> finished, final int c, final double threshold) {
         int n = 0;

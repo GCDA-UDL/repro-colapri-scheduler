@@ -1,0 +1,124 @@
+##########################################################################
+#  EXP-H · stochastic (Poisson) arrivals: M/M/2 validation of the engine and a stable
+#  heavy-traffic regime (30 seeds, CI95, warm-up discarded)
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+##########################################################################
+
+=== VALIDATION · FCFS, Poisson arrivals, exponential lengths (mean 4000 MI) = M/M/2; 5000 tasks, first 500 discarded, 30 seeds ===
+
+rho      lambda/s       wait (sim)     Erlang-C   rel.diff
+0.50        0.250        1.39±0.05       1.3333      +4.4%
+0.70        0.350        4.11±0.24       3.8431      +6.9%
+0.80        0.400        7.71±0.62       7.1111      +8.5%
+0.90        0.450       19.60±2.48      17.0526     +14.9%
+
+
+=== STABLE HEAVY TRAFFIC · Poisson arrivals, classes 0/9 mixed 9:1, lengths 4000 MI +/-30%; 3000 tasks, first 300 discarded, 30 seeds; weights 6:1 ===
+  (wait.p95.p9 = 95th percentile of the low-class waiting time in a seed; meanWait.all = mean wait of all
+   tasks, the frequency-weighted mean that Kleinrock's conservation law keeps constant for length-blind schedulers)
+
+--- offered load rho = 0.70 (lambda = 0.350 tasks/s) ---
+scheduler               resp.p0        resp.p9    wait.p95.p9     waitMAX.p9   meanWait.all
+FCFS                  6.33±0.13      6.31±0.11      8.44±0.45     17.34±1.26      2.26±0.13
+StrictPriority        5.90±0.08     10.14±0.64     28.75±4.45     72.67±9.80      2.26±0.13
+Priority+Aging        5.93±0.10      9.89±0.43     27.69±2.54     54.92±2.28      2.26±0.13
+EqualShare            6.49±0.14      4.89±0.03      2.91±0.06      4.35±0.15      2.26±0.13
+DFPO                  6.35±0.14      6.12±0.09      7.63±0.39     18.49±2.15      2.26±0.13
+SFQ-weighted          6.31±0.14      6.44±0.14     11.20±0.57     27.10±3.07      2.26±0.13
+ColaPri               6.23±0.13      7.20±0.16     12.61±0.67     30.15±3.17      2.26±0.13
+SFQ(20:1)             6.01±0.10      9.20±0.49     24.05±3.04     59.72±8.45      2.26±0.13
+ColaPri(20:1)         5.97±0.10      9.54±0.52     25.83±3.54     60.10±8.53      2.26±0.13
+ColaPri(60:1)         5.90±0.08     10.12±0.64     28.34±4.01     72.70±9.81      2.26±0.13
+  paired per-seed differences (mean±CI95 of the difference):
+    ColaPri - FCFS             resp.p0 -0.1±0.0  resp.p9 +0.9±0.1  wait.p95.p9 +4.2±0.6  waitMAX.p9 +12.8±3.2
+    ColaPri - SFQ-weighted     resp.p0 -0.1±0.0  resp.p9 +0.8±0.1  wait.p95.p9 +1.4±0.4  waitMAX.p9 +3.0±1.5
+    ColaPri - Priority+Aging   resp.p0 +0.3±0.0  resp.p9 -2.7±0.3  wait.p95.p9 -15.1±2.4  waitMAX.p9 -24.8±3.5
+    ColaPri - StrictPriority   resp.p0 +0.3±0.1  resp.p9 -2.9±0.6  wait.p95.p9 -16.1±4.3  waitMAX.p9 -42.5±9.7
+    ColaPri - DFPO             resp.p0 -0.1±0.0  resp.p9 +1.1±0.1  wait.p95.p9 +5.0±0.5  waitMAX.p9 +11.7±2.1
+    ColaPri - EqualShare       resp.p0 -0.3±0.0  resp.p9 +2.3±0.1  wait.p95.p9 +9.7±0.7  waitMAX.p9 +25.8±3.1
+    ColaPri(20:1) - FCFS       resp.p0 -0.4±0.0  resp.p9 +3.2±0.4  wait.p95.p9 +17.4±3.3  waitMAX.p9 +42.8±8.0
+    ColaPri(20:1) - Priority+Aging resp.p0 +0.0±0.0  resp.p9 -0.4±0.2  wait.p95.p9 -1.9±1.6  waitMAX.p9 +5.2±7.4
+    ColaPri(20:1) - StrictPriority resp.p0 +0.1±0.0  resp.p9 -0.6±0.2  wait.p95.p9 -2.9±1.2  waitMAX.p9 -12.6±5.2
+    ColaPri(20:1) - SFQ(20:1)  resp.p0 -0.0±0.0  resp.p9 +0.3±0.1  wait.p95.p9 +1.8±0.9  waitMAX.p9 +0.4±2.2
+    ColaPri(60:1) - StrictPriority resp.p0 +0.0±0.0  resp.p9 -0.0±0.0  wait.p95.p9 -0.4±0.6  waitMAX.p9 +0.0±0.1
+    ColaPri(60:1) - Priority+Aging resp.p0 -0.0±0.0  resp.p9 +0.2±0.2  wait.p95.p9 +0.6±1.8  waitMAX.p9 +17.8±8.2
+
+--- offered load rho = 0.80 (lambda = 0.400 tasks/s) ---
+scheduler               resp.p0        resp.p9    wait.p95.p9     waitMAX.p9   meanWait.all
+FCFS                  8.39±0.37      8.33±0.35     14.47±1.45     25.54±2.55      4.31±0.36
+StrictPriority        7.08±0.18     20.13±2.36    70.28±12.39   141.88±23.68      4.32±0.37
+Priority+Aging        7.41±0.29     17.09±1.16     51.43±2.66     66.16±2.84      4.32±0.36
+EqualShare            8.75±0.40      5.10±0.04      3.07±0.07      4.64±0.24      4.31±0.36
+DFPO                  8.52±0.39      7.03±0.17     10.36±0.73     20.59±2.80      4.31±0.36
+SFQ-weighted          8.37±0.38      8.43±0.54     19.27±3.07     41.62±6.63      4.32±0.36
+ColaPri               8.23±0.37      9.74±0.54     20.90±2.76     43.15±6.67      4.31±0.36
+SFQ(20:1)             7.44±0.25     16.91±1.75     54.42±8.64   110.27±17.69      4.32±0.36
+ColaPri(20:1)         7.37±0.25     17.51±1.72     55.59±8.28   112.86±17.20      4.32±0.36
+ColaPri(60:1)         7.11±0.19     19.92±2.26    68.24±10.98   140.84±23.74      4.32±0.36
+  paired per-seed differences (mean±CI95 of the difference):
+    ColaPri - FCFS             resp.p0 -0.2±0.1  resp.p9 +1.4±0.4  wait.p95.p9 +6.4±2.7  waitMAX.p9 +17.6±6.5
+    ColaPri - SFQ-weighted     resp.p0 -0.1±0.0  resp.p9 +1.3±0.1  wait.p95.p9 +1.6±0.7  waitMAX.p9 +1.5±1.4
+    ColaPri - Priority+Aging   resp.p0 +0.8±0.1  resp.p9 -7.4±0.9  wait.p95.p9 -30.5±3.0  waitMAX.p9 -23.0±6.7
+    ColaPri - StrictPriority   resp.p0 +1.1±0.2  resp.p9 -10.4±2.1  wait.p95.p9 -49.4±11.7  waitMAX.p9 -98.7±23.2
+    ColaPri - DFPO             resp.p0 -0.3±0.1  resp.p9 +2.7±0.4  wait.p95.p9 +10.5±2.2  waitMAX.p9 +22.6±4.6
+    ColaPri - EqualShare       resp.p0 -0.5±0.1  resp.p9 +4.6±0.5  wait.p95.p9 +17.8±2.7  waitMAX.p9 +38.5±6.6
+    ColaPri(20:1) - FCFS       resp.p0 -1.0±0.2  resp.p9 +9.2±1.4  wait.p95.p9 +41.1±7.0  waitMAX.p9 +87.3±15.2
+    ColaPri(20:1) - Priority+Aging resp.p0 -0.0±0.1  resp.p9 +0.4±0.7  wait.p95.p9 +4.2±6.1  waitMAX.p9 +46.7±15.2
+    ColaPri(20:1) - StrictPriority resp.p0 +0.3±0.1  resp.p9 -2.6±0.8  wait.p95.p9 -14.7±5.3  waitMAX.p9 -29.0±11.0
+    ColaPri(20:1) - SFQ(20:1)  resp.p0 -0.1±0.0  resp.p9 +0.6±0.1  wait.p95.p9 +1.2±1.1  waitMAX.p9 +2.6±2.6
+    ColaPri(60:1) - StrictPriority resp.p0 +0.0±0.0  resp.p9 -0.2±0.1  wait.p95.p9 -2.0±2.0  waitMAX.p9 -1.0±1.4
+    ColaPri(60:1) - Priority+Aging resp.p0 -0.3±0.1  resp.p9 +2.8±1.2  wait.p95.p9 +16.8±8.7  waitMAX.p9 +74.7±21.8
+
+--- offered load rho = 0.90 (lambda = 0.450 tasks/s) ---
+scheduler               resp.p0        resp.p9    wait.p95.p9     waitMAX.p9   meanWait.all
+FCFS                 15.27±1.87     15.39±1.85     32.50±5.52     46.05±6.70     11.22±1.87
+StrictPriority        9.53±0.51    66.88±15.09   218.47±57.81   305.02±64.21     11.16±1.86
+Priority+Aging       12.96±1.73     36.04±3.37     72.60±5.64     85.91±6.21     11.21±1.86
+EqualShare           16.40±2.09      5.34±0.03      3.25±0.07      4.94±0.29     11.23±1.90
+DFPO                 16.02±2.05      8.54±0.23     13.35±0.83     25.93±2.76     11.21±1.86
+SFQ-weighted         15.54±2.04     13.06±1.09     35.39±5.15     65.31±8.10     11.24±1.88
+ColaPri              15.22±2.01     15.49±1.06     37.60±4.69     65.83±7.89     11.20±1.86
+SFQ(20:1)            10.98±0.93    53.87±11.52   172.83±40.51   240.83±46.12     11.19±1.89
+ColaPri(20:1)        10.87±0.92    54.85±11.42   174.01±40.55   242.81±46.03     11.18±1.88
+ColaPri(60:1)         9.74±0.61    65.14±14.31   208.21±51.67   295.62±63.33     11.18±1.88
+  paired per-seed differences (mean±CI95 of the difference):
+    ColaPri - FCFS             resp.p0 -0.0±0.2  resp.p9 +0.1±1.6  wait.p95.p9 +5.1±6.3  waitMAX.p9 +19.8±9.5
+    ColaPri - SFQ-weighted     resp.p0 -0.3±0.1  resp.p9 +2.4±0.3  wait.p95.p9 +2.2±1.2  waitMAX.p9 +0.5±2.3
+    ColaPri - Priority+Aging   resp.p0 +2.3±0.3  resp.p9 -20.5±2.9  wait.p95.p9 -35.0±6.3  waitMAX.p9 -20.1±9.2
+    ColaPri - StrictPriority   resp.p0 +5.7±1.5  resp.p9 -51.4±14.6  wait.p95.p9 -180.9±57.2  waitMAX.p9 -239.2±64.6
+    ColaPri - DFPO             resp.p0 -0.8±0.1  resp.p9 +6.9±0.9  wait.p95.p9 +24.2±4.3  waitMAX.p9 +39.9±6.3
+    ColaPri - EqualShare       resp.p0 -1.2±0.1  resp.p9 +10.2±1.0  wait.p95.p9 +34.3±4.7  waitMAX.p9 +60.9±7.8
+    ColaPri(20:1) - FCFS       resp.p0 -4.4±1.0  resp.p9 +39.5±9.6  wait.p95.p9 +141.5±35.2  waitMAX.p9 +196.8±39.9
+    ColaPri(20:1) - Priority+Aging resp.p0 -2.1±0.9  resp.p9 +18.8±8.2  wait.p95.p9 +101.4±35.1  waitMAX.p9 +156.9±40.3
+    ColaPri(20:1) - StrictPriority resp.p0 +1.3±0.4  resp.p9 -12.0±4.0  wait.p95.p9 -44.5±22.7  waitMAX.p9 -62.2±27.6
+    ColaPri(20:1) - SFQ(20:1)  resp.p0 -0.1±0.0  resp.p9 +1.0±0.4  wait.p95.p9 +1.2±1.9  waitMAX.p9 +2.0±3.5
+    ColaPri(60:1) - StrictPriority resp.p0 +0.2±0.1  resp.p9 -1.7±1.0  wait.p95.p9 -10.3±8.1  waitMAX.p9 -9.4±5.1
+    ColaPri(60:1) - Priority+Aging resp.p0 -3.2±1.1  resp.p9 +29.1±11.1  wait.p95.p9 +135.6±46.2  waitMAX.p9 +209.7±57.6
+
+--- offered load rho = 0.95 (lambda = 0.475 tasks/s) ---
+scheduler               resp.p0        resp.p9    wait.p95.p9     waitMAX.p9   meanWait.all
+FCFS                 31.64±7.42     31.79±7.44    63.02±12.97    77.25±13.36     27.59±7.42
+StrictPriority       12.01±0.94   208.63±68.69  506.67±125.69  610.06±123.97     27.47±7.45
+Priority+Aging       28.29±7.22     62.30±9.10   103.82±13.09   118.40±13.56     27.63±7.38
+EqualShare           34.61±8.21      5.45±0.03      3.24±0.08      4.87±0.24     27.64±7.41
+DFPO                 34.03±8.14      9.25±0.26     14.53±0.89     26.88±3.06     27.50±7.35
+SFQ-weighted         33.27±8.18     16.91±1.54     45.71±6.22     75.07±9.22     27.60±7.42
+ColaPri              32.98±8.16     20.47±1.39     49.06±5.47     77.55±8.41     27.70±7.41
+SFQ(20:1)            15.76±2.15   174.38±57.86  448.63±115.65  533.15±117.27     27.48±7.40
+ColaPri(20:1)        15.69±2.14   175.43±57.82  448.62±115.00  535.08±117.99     27.52±7.40
+ColaPri(60:1)        12.54±1.15   203.69±67.16  501.14±127.11  593.29±127.56     27.46±7.46
+  paired per-seed differences (mean±CI95 of the difference):
+    ColaPri - FCFS             resp.p0 +1.3±0.8  resp.p9 -11.3±6.9  wait.p95.p9 -14.0±12.9  waitMAX.p9 +0.3±14.7
+    ColaPri - SFQ-weighted     resp.p0 -0.3±0.2  resp.p9 +3.6±0.4  wait.p95.p9 +3.4±2.1  waitMAX.p9 +2.5±3.0
+    ColaPri - Priority+Aging   resp.p0 +4.7±0.9  resp.p9 -41.8±8.5  wait.p95.p9 -54.8±13.2  waitMAX.p9 -40.8±15.0
+    ColaPri - StrictPriority   resp.p0 +21.0±7.4  resp.p9 -188.2±68.1  wait.p95.p9 -457.6±124.7  waitMAX.p9 -532.5±123.1
+    ColaPri - DFPO             resp.p0 -1.0±0.2  resp.p9 +11.2±1.2  wait.p95.p9 +34.5±4.9  waitMAX.p9 +50.7±6.8
+    ColaPri - EqualShare       resp.p0 -1.6±0.3  resp.p9 +15.0±1.4  wait.p95.p9 +45.8±5.5  waitMAX.p9 +72.7±8.3
+    ColaPri(20:1) - FCFS       resp.p0 -15.9±5.6  resp.p9 +143.6±50.4  wait.p95.p9 +385.6±102.3  waitMAX.p9 +457.8±105.2
+    ColaPri(20:1) - Priority+Aging resp.p0 -12.6±5.4  resp.p9 +113.1±48.9  wait.p95.p9 +344.8±102.1  waitMAX.p9 +416.7±104.9
+    ColaPri(20:1) - StrictPriority resp.p0 +3.7±1.2  resp.p9 -33.2±12.3  wait.p95.p9 -58.0±22.7  waitMAX.p9 -75.0±22.8
+    ColaPri(20:1) - SFQ(20:1)  resp.p0 -0.1±0.1  resp.p9 +1.0±1.2  wait.p95.p9 -0.0±4.6  waitMAX.p9 +1.9±8.2
+    ColaPri(60:1) - StrictPriority resp.p0 +0.5±0.2  resp.p9 -4.9±2.5  wait.p95.p9 -5.5±5.6  waitMAX.p9 -16.8±13.7
+    ColaPri(60:1) - Priority+Aging resp.p0 -15.8±6.3  resp.p9 +141.4±58.2  wait.p95.p9 +397.3±114.2  waitMAX.p9 +474.9±114.4
+
+#  FIN EXP-H.

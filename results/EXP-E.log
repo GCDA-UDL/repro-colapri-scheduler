@@ -1,7 +1,7 @@
 ##########################################################################
 #  EXP-E · ColaPri on REAL traces (20 seeds, subsample 80 VMs, CI95)
 #  priority by burstiness: bursty=interactive(p0) ... stable=batch(p9)
-#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
 #  task length = clamp(0.3 * sum(CPU series), 1000, 12000) MI; one arrival every 0.5 s;
 #  rho = mean length / (MIPS * VM_PES * spacing); 'floor'/'ceiling' = share of tasks clipped to 1000 / 12000 MI
 ##########################################################################

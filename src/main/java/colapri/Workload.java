@@ -45,6 +45,31 @@ public final class Workload {
         }
         return specs;
     }
+    /**
+     * Poisson arrivals (exponential inter-arrival times at {@code rate} tasks/s) with the class drawn from the weighted
+     * bag of {@link #seeded}. Lengths: {@code lenJitter >= 0} draws them uniformly within +/-lenJitter around
+     * {@code baseLen} (as {@link #seeded}, floor 500 MI); {@code lenJitter < 0} draws them exponentially with mean
+     * {@code baseLen} (M/M/c validation of the simulation engine). Since package version 1.1.3 (EXP-H).
+     */
+    public static List<Spec> poisson(final long seed, final int n, final double rate,
+                                     final int[] classes, final int[] mix,
+                                     final long baseLen, final double lenJitter) {
+        final var rng = new Random(seed);
+        final List<Integer> bag = new ArrayList<>();
+        for (int i = 0; i < classes.length; i++) for (int k = 0; k < mix[i]; k++) bag.add(classes[i]);
+        final var specs = new ArrayList<Spec>(n);
+        double t = 0;
+        for (int i = 0; i < n; i++) {
+            t += -Math.log(1 - rng.nextDouble()) / rate;
+            final int pri = bag.get(rng.nextInt(bag.size()));
+            final long len = lenJitter >= 0
+                ? Math.max(500, Math.round(baseLen * (1 + lenJitter * (rng.nextDouble() * 2 - 1))))
+                : Math.max(1, Math.round(-baseLen * Math.log(1 - rng.nextDouble())));
+            specs.add(new Spec(t, pri, len));
+        }
+        return specs;
+    }
+
     /** CPU-bound cloudlet: 100% CPU of one PE, negligible RAM/BW demand. (Using UtilizationModelFull for
      *  RAM and BW as well made CloudSim Plus serialise the VM's PEs under a backlog and drop one cloudlet
      *  per VM -- audit finding C-01, 2026-10-20.) */

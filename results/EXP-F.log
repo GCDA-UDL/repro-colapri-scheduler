@@ -1,10 +1,11 @@
 ##########################################################################
 #  EXP-F · ColaPri AUTOMATIC activation (non-stationary load: calm->storm->drain->calm)
 #  cost = resp.p0 + 10*starv.p9   (low = fast high-class, no low-class starvation)
-#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
 ##########################################################################
 
 Learned alpha by backlog bucket [each 12 tasks]: [0.25, 0.25, 0.25, 0.25, 1.0, 1.0]
+  its cost on the TRAIN seeds: 161.5
 
 [fixed-theta sweep] theta -> cost on TRAIN seeds (selection) | cost on TEST seeds (report)
   theta=0          -> train 256.2 | test 254.5
@@ -30,16 +31,16 @@ Learned alpha by backlog bucket [each 12 tasks]: [0.25, 0.25, 0.25, 0.25, 1.0, 1
 
 (TEST seeds 10..29, mean+/-CI95)
 policy                      resp.p0      resp.p9    waitMAX.p9   starv.p9 overhead.ms       cost
-always-on                  81.0±2.6     47.3±5.6     208.8±9.2   17.4±2.1     2.4±0.2 254.5±18.5
-FCFS(theta=inf)            83.7±1.3     41.4±2.5     206.4±4.9   16.2±1.5     1.6±0.1 245.2±14.9
-fixed(theta=15)            81.6±2.5     45.8±5.4     207.4±9.9   16.8±2.0     2.2±0.2 249.6±17.5
-best-fixed(theta=20)       82.0±2.4     44.9±5.4    206.3±10.0   16.4±1.9     2.0±0.1 246.0±17.0
-analytic(30,60)            94.4±1.4     15.5±2.3     55.6±11.2    2.1±1.8     2.0±0.1 115.4±17.5
-fuzzy(20,50)               87.0±2.5     32.7±5.5    170.3±21.8   12.4±2.4     2.1±0.1 210.5±22.2
-learned(lookup)            92.2±1.9     20.5±3.9     95.4±20.7    6.7±2.7     2.2±0.1 159.2±25.6
-always-on w=3:1            89.9±1.9     26.0±4.0    116.6±15.2   10.9±2.6     2.2±0.1 198.9±25.3
-always-on w=2:1            93.3±1.6     17.9±2.9     72.0±11.3    5.1±2.6     2.2±0.2 143.8±25.4
-always-on w=1:1            96.7±1.4     10.1±1.7      30.9±6.4    0.4±0.7     2.1±0.1  100.2±7.2
+always-on                  81.0±2.6     47.3±5.6     208.8±9.2   17.4±2.1     2.5±0.3 254.5±18.5
+FCFS(theta=inf)            83.7±1.3     41.4±2.5     206.4±4.9   16.2±1.5     1.4±0.1 245.2±14.9
+fixed(theta=15)            81.6±2.5     45.8±5.4     207.4±9.9   16.8±2.0     1.9±0.0 249.6±17.5
+best-fixed(theta=20)       82.0±2.4     44.9±5.4    206.3±10.0   16.4±1.9     2.0±0.2 246.0±17.0
+analytic(30,60)            94.4±1.4     15.5±2.3     55.6±11.2    2.1±1.8     1.9±0.1 115.4±17.5
+fuzzy(20,50)               87.0±2.5     32.7±5.5    170.3±21.8   12.4±2.4     1.9±0.1 210.5±22.2
+learned(lookup)            92.2±1.9     20.5±3.9     95.4±20.7    6.7±2.7     2.0±0.1 159.2±25.6
+always-on w=3:1            89.9±1.9     26.0±4.0    116.6±15.2   10.9±2.6     2.0±0.2 198.9±25.3
+always-on w=2:1            93.3±1.6     17.9±2.9     72.0±11.3    5.1±2.6     1.9±0.0 143.8±25.4
+always-on w=1:1            96.7±1.4     10.1±1.7      30.9±6.4    0.4±0.7     2.0±0.1  100.2±7.2
 
   paired per-seed differences (mean±CI95 of the difference):
     analytic(30,60) - best-fixed(theta=20) cost -130.7±13.1  resp.p0 +12.3±2.0  starv.p9 -14.3±1.4
@@ -64,7 +65,25 @@ always-on w=1:1            96.7±1.4     10.1±1.7      30.9±6.4    0.4±0.7   
     always-on w=2:1        0
     always-on w=1:1        0
 
-  (the activation degree scales the effective weight: a continuous policy and a smaller fixed weight
-   move along the same resp.p0 / starv.p9 frontier; the gate only chooses the point from the backlog)
+  constant-activation controls (alpha = c, effective weight 1+5c, gate always open; TEST seeds):
+    control                           resp.p0   starv.p9
+    const-alpha=0.05(weff=1.25)      96.0±1.4    0.6±1.2
+    const-alpha=0.10(weff=1.50)      95.1±1.4    1.7±1.7
+    const-alpha=0.15(weff=1.75)      94.2±1.5    3.4±2.3
+    const-alpha=0.25(weff=2.25)      92.6±1.6    6.7±2.7
+    const-alpha=0.30(weff=2.50)      91.7±1.7    8.2±2.7
+    const-alpha=0.50(weff=3.50)      88.2±2.1   12.7±2.4
+    const-alpha=0.60(weff=4.00)      86.5±2.3   14.5±2.3
+    const-alpha=0.80(weff=5.00)      83.5±2.6   16.2±2.1
+
+  matched comparison with the constant-weight curve (per seed: late tasks of the curve interpolated linearly at
+   the policy's resp.p0 between the two bracketing constant weights, minus the policy's late tasks; mean±CI95;
+   > 0 = fewer late low-class tasks than a constant weight at the same high-class response):
+    analytic(30,60)        integer weights: +1.5±0.9 (weff 1.00-2.00)   integer + fractional weights: +1.3±0.8 (weff 1.50-1.75)
+    fuzzy(20,50)           integer weights: +0.3±0.6 (weff 3.00-6.00)   integer + fractional weights: +1.3±0.4 (weff 3.50-4.00)
+    learned(lookup)        integer weights: -0.2±0.6 (weff 2.00-3.00)   integer + fractional weights: +0.3±0.2 (weff 2.25-2.50)
+
+  (the activation degree scales the effective weight; the matched comparison measures what choosing it from
+   the backlog adds over a constant weight at the same high-class response)
 
 #  FIN EXP-F.

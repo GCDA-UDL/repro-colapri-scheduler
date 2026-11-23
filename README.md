@@ -6,7 +6,7 @@
 
 Reproducible code, experiment harnesses, captured results and trace provenance for the paper:
 
-> **ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task
+> **ColaPri: Class-Weighted Fair Queueing with a Per-Task Dispatch Bound for Cloud Task
 > Scheduling** (submitted to *Simulation Modelling Practice and Theory*).
 
 **Authors:** Vitor L. da Silva, Rosana Tomàs, Joaquim Oliva, Fernando Guirado — SEMBAC, Universitat de
@@ -19,11 +19,13 @@ properties evaluated rigorously (up to 30 seeds, 95% CI):
 
 1. **No starvation** — every task is dispatched after a number of other dispatches bounded by its own
    class's backlog (Proposition 2 of the paper, checked task by task in EXP-A: 0 violations). Under
-   sustained load, 6:1 weights cut the worst-case low-class wait by **85%** vs. strict priority and 27% vs.
+   sustained overload (200 tasks), 6:1 weights cut the worst-case low-class wait by **85%** vs. strict priority and 27% vs.
    FCFS, at a high-class response 3.5% slower than FCFS's; the weight moves ColaPri along the
-   FCFS ↔ strict-priority frontier (20:1 → −37%, 60:1 → −10% at +8% high-class response).
+   frontier from beyond FCFS to close to strict priority (20:1 → −37%, 60:1 → −10% at +8% high-class response).
+   With Poisson arrivals below capacity (EXP-H) the same ordering holds and the mean wait over all tasks is the same
+   for every scheduler (Kleinrock's conservation law); the corrected engine reproduces the M/M/2 queue.
 2. **Tunable weighted differentiation** — per-class response ratio scales with the configured weight (**1.0 → 2.6**).
-3. **Load-adaptive** — below a backlog threshold the queue keeps arrival order (identical to FCFS at ρ≈1.1 against a θ=0 control); above it, it differentiates. A whole 60-task simulation run costs ≈ **1.2 ms** of wall-clock time.
+3. **Load-adaptive** — below a backlog threshold the queue keeps arrival order (identical to FCFS at ρ≈1.1 against a θ=0 control); above it, it differentiates. A whole 60-task simulation run costs ≈ **1.2 ms** of wall-clock time (35 ms for 1000 tasks on 16 VMs).
 
 ColaPri is implemented as a `CloudletScheduler` using **persistent virtual-time tags**: the *k*-th tagged
 task of class *c* gets tag *k/w_c*, assigned once, with *k* resynchronised to the virtual time (largest tag
@@ -71,13 +73,16 @@ Each is a `main` class; select it with `-Dexec.mainClass=colapri.<Class>`.
 | `SensitivityEval`  | EXP-D · parameter sweeps (30 seeds) | weight ratio, adaptive threshold, load, PEs |
 | `RealTraceRigorous`| EXP-E · 5 real traces (20 seeds) | per-class response on PlanetLab/Alibaba/Bitbrains/Materna/Azure |
 | `ActivationEval`   | EXP-F · automatic activation (10 train + 20 test seeds; calm → storm → drain → calm) | always-on / FCFS / fixed / analytic / fuzzy / learned + fixed-weight controls 3:1, 2:1, 1:1 |
+| `StochasticEval`   | EXP-H · Poisson arrivals (30 seeds) | M/M/2 check of the engine (FCFS, exponential lengths, also at 1 ms) and a stable heavy-traffic regime (ρ = 0.7…0.95) with 10 schedulers incl. ColaPri 6:1/20:1/60:1 |
 | `AgingSweep`       | EXP-G · aging-factor sweep (30 seeds) | priority with aging, factor 0.01…3, against ColaPri's weight 1:1…60:1 on the EXP-A starvation workload (200 and 600 tasks), compared at matched high-class response |
 | `EngineProbe`      | simulator probe (30 seeds) | queue bypass and idle gap of CloudSim Plus 8.5.7 with and without the dispatch-order fix |
 | `CfsProbe`         | simulator probe | built-in CFS scheduler: termination and finished tasks |
+| `CapacityProbe`    | simulator probe | throttling of cloudlets that claim their VM's full RAM/BW (`results/CAPACITY.log`) |
 
-All metrics are reported as mean ± 95% CI. **`results/EXP-{A..G}.log`** are the captured logs behind
-every table in the paper; `results/ENGINE*.log`, `results/EXP-F_noRebase.log` and `results/CFS.log` are
-the probes quoted in its setup and activation sections. Simulated metrics (response, waiting, makespan) are seed-deterministic —
+All metrics are reported as mean ± 95% CI. **`results/EXP-{A..H}.log`** are the captured logs behind
+every table in the paper; `results/EXP-E_nofloor.log` (traces without the 1000 MI floor), `results/EXP-H_1ms.log`
+(M/M/2 check at 1 ms), `results/ENGINE*.log`, `results/EXP-F_noRebase.log`, `results/CFS.log` and
+`results/CAPACITY.log` are the runs and probes quoted in its setup, trace, Poisson and activation sections. Simulated metrics (response, waiting, makespan) are seed-deterministic —
 re-running reproduces them bit-identically; only the wall-clock `overhead.ms` column varies with the
 host (reference host: Intel Core i7-14700KF, 32 GB RAM, Windows 11, Docker, Temurin JDK 21).
 The `JFIw` / `JFI1` columns (EXP-A MAIN, EXP-B, EXP-C) are Jain's fairness index over the per-class
@@ -93,9 +98,10 @@ Reproduce everything with one command: `./scripts/run_all.sh [/path/to/traces]`.
 | EXP-B | 0–19 (20) | datacenter mapping×scheduler table |
 | EXP-C | 0–9 (10) | scalability table |
 | EXP-D | 0–29 (30) | weight-ratio / threshold / load / PEs sweeps |
-| EXP-E | 0–19 (20) | production-trace table (priority = burstiness tertiles per subsample) |
+| EXP-E | 0–19 (20) | trace-derived task-mix tables (priority = burstiness tertiles per subsample); `EXP-E_nofloor`: the same without the length floor |
 | EXP-F | train 0–9, test 10–29 | activation-policy table + θ sweep |
 | EXP-G | 0–29 (30) | aging curve of the starvation trade-off figure and the matched-response comparisons of the starvation section (its 200-task rows repeat those of EXP-A) |
+| EXP-H | 0–29 (30) | Poisson-arrival table (ρ = 0.9 in the paper, 0.7/0.8/0.95 in the log) and the M/M/2 check of the engine (`EXP-H_1ms` at 1 ms) |
 
 ### Activation degree vs. weight (EXP-F)
 
@@ -104,10 +110,13 @@ weighted-RR), set by one of: `alwaysOn`, `fixed(θ)`, `analytic(lo,hi)` (closed-
 `fuzzy(lo,hi)` (zero-order Sugeno), or `learned(table,width)` (offline lookup). All are O(1) and
 deterministic at inference. Every hyper-parameter (fixed θ, ramp placement, learned table) is selected on
 the 10 training seeds and reported on the 20 test seeds. Because α scales the effective weight
-(`1 + α·(w−1)`), EXP-F also runs fixed-weight controls (always on, 3:1 / 2:1 / 1:1): they trace the
-response/late-task frontier. **Every activation policy lands on that frontier and none improves on it**:
-activation chooses the effective weight from the backlog. The closed-form **analytic** ramp reaches the
-frontier without training and the offline-**learned** lookup does no better, so no ML is needed. Under
+(`1 + α·(w−1)`), EXP-F also runs fixed-weight controls (always on, 3:1 / 2:1 / 1:1) and, since v1.1.3, eight
+constant-activation controls (α = 0.05…0.8, effective weights 1.25…5): together they trace the response/late-task
+frontier of constant weights. Every activation policy lands close to it; matched seed by seed at equal
+high-class response, the analytic ramp and the fuzzy controller have 1.3 ± 0.8 and 1.3 ± 0.4 fewer late
+low-class tasks than the interpolated constant weight, and the learned table 0.3 ± 0.2 fewer, so choosing the
+weight from the backlog adds a small gain. The closed-form **analytic** ramp obtains it without training and
+the offline-**learned** lookup does no better, so no ML is needed. Under
 the experiment's cost (resp.p0 + 10·late.p9) the cheapest configuration is the 1:1 weight, i.e. the least
 prioritisation; which point of the frontier to use is a policy decision. Without the counter re-base of
 v1.1.2 the continuous policies broke the arrival order within a class (`results/EXP-F_noRebase.log`).
@@ -162,9 +171,9 @@ docker run --rm -v "$PWD:/workspace" -v "/path/to/traces:/traces" -v colapri_m2:
 | `CloudletSchedulerSJF`            | shortest-job-first |
 | `CloudletSchedulerWFQ`            | equal share per class ("EqualShare" in the logs): ColaPri's tag rule with weight 1 for every class |
 | `CloudletSchedulerTimeShared` (CloudSim Plus) | per-task processor sharing ("PS-timeshared" in the logs): the simulator's built-in fair reference |
-| `CloudletSchedulerDFPO`           | DFPO (Saxena et al. 2016): three buckets, weighted-RR quanta 3:2:1 — closest weighted baseline |
+| `CloudletSchedulerDFPO`           | DFPO (Saxena et al. 2016): three FIFO queues (priorities 0–3 / 4–6 / 7–9) served in weighted round-robin with quanta 3:2:1, empty queues skipped without credit (since v1.1.3) — closest weighted baseline |
 | `CloudletSchedulerSFQ`            | start-time fair queueing (Goyal et al. 1997) with ColaPri's own weights 6:3:1 — classical weighted-FQ control (tags advance by length/weight, always on) |
-| `VmMappers`                       | RoundRobin / Min-Min / Max-Min / Demand-Aware task→VM mapping |
+| `VmMappers`                       | RoundRobin / Min-Min / Max-Min / MCT (minimum completion time, Braun et al. 2001) task→VM mapping |
 | `CfsProbe`                        | probe for the built-in `CloudletSchedulerCompletelyFair`: its runs end with most tasks unfinished, without and with a scheduling interval (6/40 and 12/40, `results/CFS.log`) |
 | `EngineProbe`                     | probe for the dispatch-order defect: queue bypass and idle gap per scheduler (`results/ENGINE*.log`) |
 | `CapacityProbe`                   | probe for the v1.0.x defect: cloudlets with `UtilizationModelFull` for RAM/BW are throttled to one PE and one per VM may never finish (kept as evidence) |
@@ -186,9 +195,9 @@ python figures/make_figures.py   # requires matplotlib
 ## Repository layout
 
 ```
-src/main/java/colapri/   schedulers (ColaPri + 8 baselines), mappers, metrics, seeded workload,
-                         trace loader, 7 experiment harnesses, EngineProbe, CfsProbe
-results/                 captured logs (EXP-A..G) behind every table in the paper + probe logs
+src/main/java/colapri/   schedulers (ColaPri + 8 baselines), mappers, metrics, seeded and Poisson workloads,
+                         trace loader, 8 experiment harnesses, EngineProbe, CfsProbe, CapacityProbe
+results/                 captured logs (EXP-A..H) behind every table in the paper + probe logs
 data/                    bundled PlanetLab / Bitbrains / Materna subsets + checksums.sha256 + PROVENANCE.md
 scripts/run_all.sh       one-command reproduction of all experiments (stock Maven image)
 Dockerfile, docker-compose.yml   reproduction image (deps pre-fetched) and `docker compose run sim <Exp>`
@@ -202,7 +211,7 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
 
 ```bibtex
 @article{colapri2026,
-  title   = {ColaPri: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler
+  title   = {ColaPri: Class-Weighted Fair Queueing with a Per-Task Dispatch Bound
              for Cloud Task Scheduling},
   author  = {da Silva, Vitor L. and Tom{\`a}s, Rosana and Oliva, Joaquim and Guirado, Fernando},
   journal = {Simulation Modelling Practice and Theory},
@@ -212,10 +221,10 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
 
 @software{colapri_repro,
   author    = {da Silva, Vitor L. and Tom{\`a}s, Rosana and Oliva, Joaquim and Guirado, Fernando},
-  title     = {{ColaPri}: a Starvation-Free, Class-Oriented Load-Adaptive Priority Scheduler for Cloud Task
+  title     = {{ColaPri}: Class-Weighted Fair Queueing with a Per-Task Dispatch Bound for Cloud Task
                Scheduling (reproduction package)},
   publisher = {Zenodo},
-  version   = {1.1.2},
+  version   = {1.1.3},
   year      = {2026},
   doi       = {10.5281/zenodo.23733334}
 }

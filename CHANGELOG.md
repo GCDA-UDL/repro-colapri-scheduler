@@ -3,6 +3,40 @@
 All notable changes to the ColaPri reproduction package. Versions follow the GitHub releases;
 the Zenodo record (once created) archives each release.
 
+## v1.1.3 — 2026-11-23
+
+Final audit before submission. **Simulated metrics of EXP-C, EXP-D, EXP-E, EXP-G and of the probes are unchanged**
+(compare_logs: identical); EXP-A changes only in the DFPO rows and the Proposition 2 audit line, EXP-B only in the
+mapper label and a new provenance line, EXP-F only by the added controls. Wall-clock `overhead.ms` values are those
+of the 2026-11-23 capture.
+
+- **Changed (baseline DFPO): faithful weighted round-robin.** `CloudletSchedulerDFPO` now serves three FIFO queues
+  (priorities 0-3 / 4-6 / 7-9) in weighted round-robin with quanta 3:2:1, skipping an empty queue without keeping
+  credit, with the position in the round persisting across dispatch events. Up to v1.1.2 it used per-bucket
+  arrival-index tags without resynchronisation, which let a sparse queue accumulate credit and be served ahead.
+  Effect (EXP-A): burst 59/54/51 s → 56/56/57 s; sustained load worst-case low-class wait 3.7 → 16.6 s, close to
+  ColaPri with weights 3:1.
+- **New (EXP-H, `StochasticEval`): Poisson arrivals.** M/M/2 validation of the corrected engine (FCFS, exponential
+  lengths: within 1.2% of Erlang-C at 1 ms, `EXP-H_1ms.log`; +4 to +15% at the default 0.1 s) and a stable
+  heavy-traffic regime (ρ = 0.7…0.95, classes 0/9 mixed 9:1, warm-up discarded) with ten schedulers, including
+  ColaPri 6:1 / 20:1 / 60:1 and SFQ 20:1. `Workload.poisson` and the metrics `quantileWaitOfClass`, `meanWait`
+  and `arrivedFrom` are new.
+- **New (EXP-F): matched constant-weight controls.** Constant activation α = c (effective weight 1 + 5c) completes
+  the curve of constant weights, and every automatic policy is compared with it seed by seed at its own high-class
+  response; the training cost of the learned table is printed.
+- **New (EXP-E_nofloor):** `-Dcolapri.traceFloor` (default 1000 MI) sets the floor of the trace-to-task reduction;
+  the run with `-Dcolapri.traceFloor=1` shows how much of the trace speed-ups the floor's offered load explains.
+- **Fixed (Proposition 2 audit):** tasks that start at once on arrival are counted before the tags of the same
+  processing update, so they are no longer charged to those tags. The largest count is now 0.97-0.98 of D(b_c,c)
+  (it was 1.00 because of the late counting); there are still no violations.
+- **Renamed:** the fourth mapper is `VmMappers.mct` ("MCT" in EXP-B.log), the minimum completion time rule of Braun
+  et al. (2001); up to v1.1.2 it was labelled "DemandAware", but the Demand-Aware VM selection of Sultan (2026) is a
+  different rule and is not implemented here. `DatacenterEval` prints the provenance line.
+- **New:** `CapacityProbe` runs in `run_all.sh` (`results/CAPACITY.log`); the figure script of the paper
+  (`figures/make_figures.py`) draws every figure at its printed width and reads the 1.1.3 logs.
+- Metadata: new paper title ("ColaPri: Class-Weighted Fair Queueing with a Per-Task Dispatch Bound for Cloud Task
+  Scheduling"), version 1.1.3 in pom, CITATION.cff, .zenodo.json and the log provenance line.
+
 ## v1.1.2 — 2026-10-28
 
 A third audit (2026-10-22/24) found a defect of the simulation engine that affects every space-shared

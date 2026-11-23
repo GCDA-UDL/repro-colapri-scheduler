@@ -1,7 +1,7 @@
 ##########################################################################
 #  EXP-G · aging-factor sweep vs ColaPri weight sweep (starvation workload of EXP-A, 30 seeds, CI95)
 #  aging offset = 9/f s: a p9 task is ordered as if it had arrived that much later
-#  colapri-cloud-scheduler 1.1.2 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
+#  colapri-cloud-scheduler 1.1.3 · CloudSim Plus 8.5.7 · event granularity 0.1 s · PE refill on completion
 ##########################################################################
 
 

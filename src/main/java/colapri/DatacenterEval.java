@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 
 /**
  * EXP-B: datacenter-scale evaluation (multi-host, multi-VM). Crosses 4 task->VM MAPPING policies
- * (RoundRobin, Min-Min, Max-Min, Demand-Aware 2026) with 2 per-VM cloudlet SCHEDULERS (default
+ * (RoundRobin, Min-Min, Max-Min, MCT) with 2 per-VM cloudlet SCHEDULERS (default
  * space-shared vs ColaPri). Shows that, regardless of how tasks are spread across VMs, swapping the
  * per-VM scheduler to ColaPri re-orders per-class service (faster high class, slower low class),
  * while the mapping policy governs makespan / load balance. N_SEEDS instances, mean +/- CI95.
@@ -45,14 +45,15 @@ public class DatacenterEval {
         System.out.println("##########################################################################");
         System.out.println("#  EXP-B · ColaPri at datacenter scale (" + HOSTS + " hosts, " + VMS + " VMs x " + VM_PES
             + " PEs, " + N_CLOUDLETS + " cloudlets, " + N_SEEDS + " seeds, CI95)");
-        System.out.println("#  mapping {RR,MinMin,MaxMin,DemandAware} x scheduler {default, ColaPri}");
+        System.out.println("#  mapping {RR,MinMin,MaxMin,MCT} x scheduler {default = patched FIFO space-shared, ColaPri}");
+        System.out.println("#  " + Metrics.provenance());
         System.out.println("##########################################################################");
 
         final Map<String, BiFunction<List<Cloudlet>, List<Vm>, Map<Cloudlet, Vm>>> mappings = new LinkedHashMap<>();
         mappings.put("RoundRobin", VmMappers::roundRobin);
         mappings.put("MinMin", VmMappers::minMin);
         mappings.put("MaxMin", VmMappers::maxMin);
-        mappings.put("DemandAware", VmMappers::demandAware);
+        mappings.put("MCT", VmMappers::mct);
 
         final Map<String, Supplier<CloudletScheduler>> scheds = new LinkedHashMap<>();
         scheds.put("default", CloudletSchedulerFifo::new);

@@ -25,6 +25,10 @@ import java.util.regex.Pattern;
  * Supported formats (CPU% column): PlanetLab (one value/line), Alibaba, Bitbrains, Materna, Azure.
  */
 public final class TraceLoader {
+    /** Floor of the trace-to-task reduction in MI (default 1000). {@code -Dcolapri.traceFloor=1} removes it, for the
+     *  robustness run EXP-E_nofloor (since package version 1.1.3). */
+    public static final long FLOOR = Long.getLong("colapri.traceFloor", 1000L);
+
 
     public record TaskSpec(double arrival, int priority, long length) {}
 
@@ -64,7 +68,7 @@ public final class TraceLoader {
         }
         final List<TaskSpec> specs = new ArrayList<>(vm.size());
         for (int i = 0; i < vm.size(); i++) {
-            final long len = (long) Math.max(1000, Math.min(12000, vm.get(i)[0] * 0.3));
+            final long len = (long) Math.max(FLOOR, Math.min(12000, vm.get(i)[0] * 0.3));
             specs.add(new TaskSpec(i * arrivalSpacing, pri[i], len));
         }
         return specs;
@@ -104,7 +108,7 @@ public final class TraceLoader {
         for (int rank = 0; rank < order.length; rank++) pri[order[rank]] = rank < third ? 0 : (rank < 2 * third ? 5 : 9);
         final List<TaskSpec> specs = new ArrayList<>(sub.size());
         for (int i = 0; i < sub.size(); i++) {
-            final long len = (long) Math.max(1000, Math.min(12000, sub.get(i)[0] * 0.3));
+            final long len = (long) Math.max(FLOOR, Math.min(12000, sub.get(i)[0] * 0.3));
             specs.add(new TaskSpec(i * arrivalSpacing, pri[i], len));
         }
         return specs;

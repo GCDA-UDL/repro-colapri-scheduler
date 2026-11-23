@@ -53,8 +53,8 @@ public class RealTraceRigorous {
         System.out.println("#  EXP-E · ColaPri on REAL traces (" + N_SEEDS + " seeds, subsample " + SAMPLE + " VMs, CI95)");
         System.out.println("#  priority by burstiness: bursty=interactive(p0) ... stable=batch(p9)");
         System.out.println("#  " + Metrics.provenance());
-        System.out.println("#  task length = clamp(0.3 * sum(CPU series), 1000, 12000) MI; one arrival every " + SPACING + " s;");
-        System.out.println("#  rho = mean length / (MIPS * VM_PES * spacing); 'floor'/'ceiling' = share of tasks clipped to 1000 / 12000 MI");
+        System.out.println("#  task length = clamp(0.3 * sum(CPU series), " + TraceLoader.FLOOR + ", 12000) MI; one arrival every " + SPACING + " s;");
+        System.out.println("#  rho = mean length / (MIPS * VM_PES * spacing); 'floor'/'ceiling' = share of tasks clipped to " + TraceLoader.FLOOR + " / 12000 MI");
         System.out.println("##########################################################################");
 
         final Map<String, Supplier<CloudletScheduler>> scheds = new LinkedHashMap<>();
@@ -74,8 +74,8 @@ public class RealTraceRigorous {
             {   // what the trace-to-task reduction keeps: length distribution of the pool (same rule as TraceLoader.sample)
                 int floor = 0, ceil = 0; double sum = 0;
                 for (final double[] v : raw) {
-                    final double len = Math.max(1000, Math.min(12000, v[0] * 0.3));
-                    sum += len; if (v[0] * 0.3 <= 1000) floor++; if (v[0] * 0.3 >= 12000) ceil++;
+                    final double len = Math.max(TraceLoader.FLOOR, Math.min(12000, v[0] * 0.3));
+                    sum += len; if (v[0] * 0.3 <= TraceLoader.FLOOR) floor++; if (v[0] * 0.3 >= 12000) ceil++;
                 }
                 final double meanLen = sum / raw.size();
                 System.out.printf("  pool: mean length %.0f MI, floor %.1f%%, ceiling %.1f%%, rho~%.2f%n",

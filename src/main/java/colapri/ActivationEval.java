@@ -54,6 +54,7 @@ public class ActivationEval {
         final double[] table = learnTable();
         System.out.print("\nLearned alpha by backlog bucket [each " + BUCKET_W + " tasks]: ");
         System.out.println(Arrays.toString(round(table)));
+        System.out.printf("  its cost on the TRAIN seeds: %.1f%n", avgCostTrain(() -> ActivationPolicy.learned(table, BUCKET_W)));
 
         // ---- best single fixed-theta: SELECTED on TRAIN seeds (grid incl. FCFS = theta infinity);
         //      the TEST cost is printed alongside for reporting only ----
@@ -139,11 +140,67 @@ public class ActivationEval {
         System.out.println("\n  intra-class order check (pairs of same-class tasks started out of arrival order, summed over the TEST seeds;");
         System.out.println("   0 = FIFO within every class):");
         for (final var e : invBy.entrySet()) System.out.printf("    %-22s %d%n", e.getKey(), e.getValue());
-        System.out.println("\n  (the activation degree scales the effective weight: a continuous policy and a smaller fixed weight");
-        System.out.println("   move along the same resp.p0 / starv.p9 frontier; the gate only chooses the point from the backlog)");
+
+        // ---- matched constant-weight controls (since 1.1.3): a constant activation alpha = c gives the fractional
+        //      effective weight 1 + c*(W_HIGH - 1); every automatic policy is compared, seed by seed, with the curve of
+        //      constant weights interpolated at its own resp.p0 (alpha = 0.2 and 0.4 give the 2:1 and 3:1 controls) ----
+        System.out.println("\n  constant-activation controls (alpha = c, effective weight 1+5c, gate always open; TEST seeds):");
+        System.out.printf("    %-28s %12s %10s%n", "control", "resp.p0", "starv.p9");
+        final Map<String, Double> weffOf = new java.util.LinkedHashMap<>();
+        weffOf.put("always-on w=1:1", 1.0); weffOf.put("always-on w=2:1", 2.0);
+        weffOf.put("always-on w=3:1", 3.0); weffOf.put("always-on", (double) W_HIGH);
+        final List<String> integerCurve = new ArrayList<>(weffOf.keySet());
+        for (final double c : new double[]{0.05, 0.1, 0.15, 0.25, 0.3, 0.5, 0.6, 0.8}) {
+            final String nm = String.format(java.util.Locale.ROOT, "const-alpha=%.2f(weff=%.2f)", c, 1 + c * (W_HIGH - 1));
+            final var cp0 = new ArrayList<Double>(); final var cst = new ArrayList<Double>();
+            for (long seed = TRAIN; seed < TRAIN + TEST; seed++) {
+                final double cc = c;
+                final var f = run((l, p) -> cc, phased(seed), W_HIGH, W_LOW).finished();
+                cp0.add(Metrics.meanResponseOfClass(f, 0));
+                cst.add((double) Metrics.starvationCount(f, 9, STARV_THRESHOLD));
+            }
+            p0By.put(nm, cp0); stBy.put(nm, cst); weffOf.put(nm, 1 + c * (W_HIGH - 1));
+            System.out.printf("    %-28s %12s %10s%n", nm, ci(cp0), ci(cst));
+        }
+        final List<String> fullCurve = new ArrayList<>(weffOf.keySet());
+        System.out.println("\n  matched comparison with the constant-weight curve (per seed: late tasks of the curve interpolated linearly at");
+        System.out.println("   the policy's resp.p0 between the two bracketing constant weights, minus the policy's late tasks; mean±CI95;");
+        System.out.println("   > 0 = fewer late low-class tasks than a constant weight at the same high-class response):");
+        for (final String pol : new String[]{an, "fuzzy(" + rf[0] + "," + rf[1] + ")", "learned(lookup)"}) {
+            System.out.printf("    %-22s integer weights: %s   integer + fractional weights: %s%n", pol,
+                matched(pol, integerCurve, p0By, stBy, weffOf), matched(pol, fullCurve, p0By, stBy, weffOf));
+        }
+        System.out.println("\n  (the activation degree scales the effective weight; the matched comparison measures what choosing it from");
+        System.out.println("   the backlog adds over a constant weight at the same high-class response)");
         System.out.println("\n#  FIN EXP-F.");
         System.out.flush();
         System.exit(0);
+    }
+
+    /** Per-seed gap between the constant-weight curve (linear interpolation between the two controls whose mean
+     *  resp.p0 brackets the policy's) and the policy's late-task count; mean±CI95 and the bracketing weights. */
+    private static String matched(final String pol, final List<String> curve, final Map<String, List<Double>> p0By,
+                                  final Map<String, List<Double>> stBy, final Map<String, Double> weffOf) {
+        final var sorted = new ArrayList<>(curve);
+        sorted.sort(java.util.Comparator.comparingDouble(k -> Metrics.meanCi95(p0By.get(k))[0]));
+        final double mx = Metrics.meanCi95(p0By.get(pol))[0];
+        String lo = null, hi = null;
+        for (final String k : sorted) {
+            if (Metrics.meanCi95(p0By.get(k))[0] <= mx) lo = k;
+            else { hi = k; break; }
+        }
+        if (lo == null || hi == null) return "outside the curve";
+        final var xa = p0By.get(lo); final var ya = stBy.get(lo);
+        final var xb = p0By.get(hi); final var yb = stBy.get(hi);
+        final var xp = p0By.get(pol); final var yp = stBy.get(pol);
+        final var gap = new ArrayList<Double>(xp.size());
+        for (int i = 0; i < xp.size(); i++) {
+            final double dx = xb.get(i) - xa.get(i);
+            final double t = Math.abs(dx) > 1e-9 ? (xp.get(i) - xa.get(i)) / dx : 0.5;
+            gap.add(ya.get(i) + t * (yb.get(i) - ya.get(i)) - yp.get(i));
+        }
+        final double[] mc = Metrics.meanCi95(gap);
+        return String.format(java.util.Locale.ROOT, "%+.1f±%.1f (weff %.2f-%.2f)", mc[0], mc[1], weffOf.get(hi), weffOf.get(lo));
     }
 
     // ---- offline learning: coordinate descent over backlog buckets on TRAIN seeds ----
