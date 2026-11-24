@@ -230,7 +230,7 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
 }
 ```
 
-The DOI above is the Zenodo concept DOI, which always resolves to the latest version (v1.1.3: 10.5281/zenodo.24479258; v1.1.2: 10.5281/zenodo.23733335).
+The DOI above is the Zenodo concept DOI, which always resolves to the latest version (v1.1.4: 10.5281/zenodo.24506459; v1.1.3: 10.5281/zenodo.24479258; v1.1.2: 10.5281/zenodo.23733335).
 
 See also `CITATION.cff` (machine-readable, picked up by GitHub and Zenodo).
 
