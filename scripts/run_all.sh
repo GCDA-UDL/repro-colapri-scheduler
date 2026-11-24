@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproduce every experiment in the ColaPri paper (EXP-A..G) plus the simulator probes (ENGINE, CFS), writing one
+# Reproduce every experiment in the ColaPri paper (EXP-A..H) plus the simulator probes (ENGINE, CFS), writing one
 # log per experiment to results/rerun/ (the committed reference logs in results/ are never overwritten). Simulated
 # metrics are seed-deterministic: the tables reproduce bit-identically; only the wall-clock overhead column varies
 # with the host. LEGACY=1 runs the engine of package 1.1.1 (0.1 s event granularity, no PE refill) and writes to

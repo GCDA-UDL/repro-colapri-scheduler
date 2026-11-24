@@ -1,0 +1,3 @@
+# Trace files are checked out byte for byte as stored (LF), on every platform, so that
+# data/checksums.sha256 verifies on a fresh clone and on the release archive alike.
+data/** -text

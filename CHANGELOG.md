@@ -3,6 +3,26 @@
 All notable changes to the ColaPri reproduction package. Versions follow the GitHub releases;
 the Zenodo record (once created) archives each release.
 
+## v1.1.4 — 2026-11-24
+
+Package fixes after the final pre-submission audit. **Code, trace bytes and captured logs are unchanged from
+v1.1.3** (the logs still report `colapri-cloud-scheduler 1.1.3`, the code that produced them). The v1.1.3 archive
+on Zenodo, whose source and trace files are byte-identical to this release, was re-run from scratch in the pinned
+image on 2026-11-24 and reproduces every simulated metric of the 16 logs (compare_logs: identical).
+
+- **Fixed (`data/checksums.sha256`):** the SHA-256 of the 200 bundled Bitbrains and Materna files had been taken on
+  a Windows working copy with CRLF line endings, so `sha256sum -c` failed on a fresh clone and on the release
+  archive (git stores LF). They are now taken on the stored bytes, and `.gitattributes` (`data/** -text`) keeps
+  the trace files byte-identical on every platform. The 200 entries of the external Alibaba and Azure subsets
+  are unchanged. Results were never affected: the loaders read lines and ignore the carriage return.
+- **Fixed (`figures/make_figures.py`, Fig. 14):** the eight constant-activation controls of `EXP-F.log` are
+  indented, so the generic row pattern parsed none of them and the figure lacked the fractional constant-weight
+  points its caption describes. They are parsed with their own pattern (asserted: 8 rows); `fig_activation.pdf`
+  is regenerated, the other figures are unchanged.
+- **Docs:** `CITATION.cff` release date; `REPRODUCE.md` (baseline count, EXP-A..H, `--ignore-missing` for the
+  bundled traces, `Metrics.checked` checks rather than asserts, a broken sentence in section 6); `run_all.sh` and
+  `Dockerfile` comments list EXP-H and the `AgingSweep` and `StochasticEval` harnesses.
+
 ## v1.1.3 — 2026-11-23
 
 Final audit before submission. **Simulated metrics of EXP-C, EXP-D, EXP-E, EXP-G and of the probes are unchanged**

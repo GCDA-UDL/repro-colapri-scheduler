@@ -2,7 +2,7 @@
 
 Everything runs inside Docker — no local Java or Maven needed. The image provides **Maven 3.9 +
 Eclipse Temurin JDK 21** and pulls **CloudSim Plus 8.5.7** as a Maven dependency; this repository
-provides ColaPri, the eight baseline schedulers (six implemented here, two CloudSim Plus built-ins), the
+provides ColaPri, the eight baseline schedulers (seven implemented here, one CloudSim Plus built-in), the
 four task-to-VM mappers, the eight experiment harnesses, the simulator probes and the bundled trace subsets.
 The reference logs are in `results/`; re-runs are written to `results/rerun/` so they never overwrite them.
 
@@ -80,7 +80,8 @@ EXP-A and EXP-E under 30 s each; the whole matrix a few minutes.
 
 By default `docker compose` mounts `./data` at `/traces`, so PlanetLab, Bitbrains and Materna run out
 of the box and the other two are reported as missing. To run all five, assemble the directory from the
-origins listed in `data/PROVENANCE.md`, verify it with `sha256sum -c data/checksums.sha256`, and point
+origins listed in `data/PROVENANCE.md`, verify it with `sha256sum -c data/checksums.sha256` (run inside that directory; with only the bundled
+traces, add `--ignore-missing`), and point
 `TRACES` at it:
 
 ```bash
@@ -89,7 +90,7 @@ TRACES=/path/to/traces docker compose run --rm sim RealTraceRigorous | tee resul
 
 ## 4. Check the results against the paper
 
-The committed `results/EXP-{A..F}.log` are the captured logs behind every table and figure of the
+The committed `results/EXP-{A..H}.log` are the captured logs behind every table and figure of the
 paper (mapping in the README, section *Seeds / paper-table manifest*). All simulated metrics —
 response, waiting, makespan, starvation counts, Jain index — are **seed-deterministic**: a re-run must
 reproduce them to the last decimal. Only the wall-clock `overhead.ms` column depends on the host.
@@ -100,8 +101,8 @@ python scripts/compare_logs.py results/EXP-A.log results/rerun/EXP-A.log   # exi
 
 `compare_logs.py` drops the `overhead.ms` column (the last column of the blocks that have one)
 before comparing, so a plain `diff` of the two files is expected to differ only there.
-Each log also ends without any `[LOST]` line: every harness asserts that all submitted cloudlets
-finished (`Metrics.checked`), see the v1.1.0 entry of `CHANGELOG.md` for the defects this guards
+Each log also ends without any `[LOST]` line: every harness checks that all submitted cloudlets
+finished (`Metrics.checked` prints a `[LOST]` line otherwise), see the v1.1.0 entry of `CHANGELOG.md` for the defects this guards
 against.
 
 ## 5. Regenerate the figures
@@ -115,6 +116,8 @@ match the logs they are generated from.
 
 ## 6. Strict long-term reproduction
 
-The base image is pinned by digest in `Dockerfile` and `scripts/run_all.sh` (index sha256:99e61abc…, resolved 2026-10-21); the tag form
-(`maven:3.9-eclipse-temurin-21@sha256:<digest>` — `docker inspect --format '{{index .RepoDigests 0}}' maven:3.9-eclipse-temurin-21`),
-and cite the Zenodo record of the release you used (see `CITATION.cff`).
+The base image is pinned by digest in `Dockerfile` and `scripts/run_all.sh` (index sha256:99e61abc…, resolved
+2026-10-21). To pin an image you build or pull yourself, write it in the same digest form
+(`maven:3.9-eclipse-temurin-21@sha256:<digest>`; the digest is printed by
+`docker inspect --format '{{index .RepoDigests 0}}' maven:3.9-eclipse-temurin-21`), and cite the Zenodo record
+of the release you used (see `CITATION.cff`).

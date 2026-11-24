@@ -7,6 +7,7 @@ PlanetLab, the first 200 files by name of `planetlab/20110303` (1052 files bundl
 
 ```bash
 cd /path/to/traces && sha256sum -c /path/to/data/checksums.sha256
+cd data && sha256sum -c --ignore-missing checksums.sha256   # bundled traces only (1252 files)
 ```
 
 | Dataset | Directory used | Origin | License / terms | In package? |

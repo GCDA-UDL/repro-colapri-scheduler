@@ -25,6 +25,6 @@ RUN mkdir -p /workspace/results
 VOLUME ["/workspace/results"]
 
 # The single argument is the experiment main class (RigorousEval, DatacenterEval, ScalabilityEval,
-# SensitivityEval, RealTraceRigorous, ActivationEval). Default: EXP-A.
+# SensitivityEval, RealTraceRigorous, ActivationEval, AgingSweep, StochasticEval). Default: EXP-A.
 ENTRYPOINT ["bash", "-lc", "mvn -q -B exec:java -Dexec.mainClass=colapri.$0 -Dexec.cleanupDaemonThreads=false"]
 CMD ["RigorousEval"]

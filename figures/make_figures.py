@@ -235,7 +235,11 @@ def fig_activation():
     # (gate always on, w = 1:1 ... 6:1) and fractional (constant activation alpha, 1 + 5 alpha), trace the curve
     f = _log("F")
     t = _rows(f.split("(TEST seeds")[1].split("paired per-seed")[0])
-    cc = _rows(f.split("constant-activation controls")[1].split("matched comparison")[0])
+    # the constant-activation rows are indented in the log, so they need their own pattern
+    cc_blk = f.split("constant-activation controls")[1].split("matched comparison")[0]
+    cc = {m.group(1): [tuple(map(float, v.split("±"))) for v in m.group(2).split()]
+          for m in re.finditer(r"^\s+(const-alpha=\S+)\s+((?:[-\d.]+±[-\d.]+\s*)+)$", cc_blk, re.M)}
+    assert len(cc) == 8, f"expected 8 constant-activation controls, parsed {len(cc)}"
     key = lambda prefix: next(k for k in t if k.startswith(prefix))
     pol = [("always-on 6:1", "always-on", GREY, "o"), ("FCFS", "FCFS", GREY, "D"),
            ("fixed(15)", "fixed(theta=15)", AMBER, "s"), ("best-fixed", "best-fixed", AMBER, "s"),
@@ -247,7 +251,7 @@ def fig_activation():
     curve = [(p0[i], st[i]) for i in (0, 7, 8, 9)] + [(v[0][0], v[1][0]) for v in cc.values()]
     curve.sort()
     off = {0: (-8, 6), 1: (7, 3), 2: (-34, -9), 3: (6, -10), 4: (-46, -9), 5: (-52, -3), 6: (6, 4), 7: (5, 4),
-           8: (6, 2), 9: (-14, 6)}
+           8: (6, 2), 9: (5, 5)}
     fig, ax = plt.subplots(figsize=(COL_W, 2.7))
     ax.set_xlim(min(p0) - 1.5, max(p0) + 1.5); ax.set_ylim(-1.0, max(st) + 2.5)
     ax.plot([c[0] for c in curve], [c[1] for c in curve], ":", color=DARK, lw=0.9, zorder=2,

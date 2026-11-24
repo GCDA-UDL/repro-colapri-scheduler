@@ -224,7 +224,7 @@ CITATION.cff, .zenodo.json, CHANGELOG.md   citation + Zenodo deposit metadata + 
   title     = {{ColaPri}: Class-Weighted Fair Queueing with a Per-Task Dispatch Bound for Cloud Task
                Scheduling (reproduction package)},
   publisher = {Zenodo},
-  version   = {1.1.3},
+  version   = {1.1.4},
   year      = {2026},
   doi       = {10.5281/zenodo.23733334}
 }
